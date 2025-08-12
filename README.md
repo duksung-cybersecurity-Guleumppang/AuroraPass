@@ -4,7 +4,7 @@
 
 ## 프로젝트 구조
 
-- `backend/`: Node.js와 Express를 사용한 백엔드 서버입니다.
+- `backend/`: Python과 FastAPI를 사용한 백엔드 서버입니다.
 - `frontend/`: React를 사용한 프론트엔드 애플리케이션입니다.
 - `docs/`: API 명세 문서가 저장되어 있습니다.
 - `docker-compose.yml`: Docker Compose를 사용하여 백엔드와 프론트엔드 서비스를 실행합니다.
@@ -25,7 +25,7 @@
 
 2.  애플리케이션은 다음 주소에서 확인할 수 있습니다.
     -   **Frontend:** `http://localhost:3000`
-    -   **Backend:** `http://localhost:3001`
+    -   **Backend:** `http://localhost:8000`
 
 ## API 명세
 

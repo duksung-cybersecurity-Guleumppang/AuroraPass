@@ -5,11 +5,11 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # requirements.txt를 복사하고 의존성을 설치합니다.
-COPY ./requirements.txt /app/
+COPY backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 프로젝트 소스 코드를 복사합니다.
-COPY ./ /app/
+COPY backend/ /app/
 
 # 8000번 포트를 외부에 노출합니다.
 EXPOSE 8000
