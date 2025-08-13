@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 type Course = {
   courseId: string;
@@ -14,6 +14,9 @@ export default function CoursesPage() {
   const [cart, setCart] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [captchaModal, setCaptchaModal] = useState<{ open: boolean; captchaId?: string; audioPath?: string }>({ open: false });
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaMsg, setCaptchaMsg] = useState('');
 
   const fetchCourses = async () => {
     const res = await fetch('/api/courses');
@@ -46,7 +49,14 @@ export default function CoursesPage() {
     setMessage('');
     try {
       const res = await fetch('/api/enroll', { method: 'POST' });
-      const data = await res.json();
+      let data: any = null;
+      try { data = await res.json(); } catch {}
+      const requireCaptcha = data?.requireCaptcha ?? data?.require_captcha;
+      if (requireCaptcha) {
+        const cap = data?.captcha || {};
+        setCaptchaModal({ open: true, captchaId: cap.captchaId || cap.captcha_id, audioPath: cap.audioPath || cap.audio_path });
+        return;
+      }
       const okCount = (data?.results || []).filter((r: any) => r.success).length;
       const failCount = (data?.results || []).length - okCount;
       setMessage(`신청 완료: 성공 ${okCount}건, 실패 ${failCount}건`);
@@ -57,10 +67,39 @@ export default function CoursesPage() {
     }
   };
 
+  const submitCaptcha = async () => {
+    if (!captchaModal.captchaId) return;
+    setCaptchaMsg('');
+    const res = await fetch('/api/enroll/unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ captchaId: captchaModal.captchaId, userInput: captchaInput })
+    });
+    const data = await res.json();
+    if (data?.success) {
+      setCaptchaModal({ open: false });
+      setCaptchaInput('');
+      // 1회 허용으로 즉시 재시도
+      await enroll();
+    } else {
+      setCaptchaMsg(data?.message || 'CAPTCHA 인증 실패');
+    }
+  };
+
+  const refreshCaptcha = async () => {
+    setCaptchaMsg('');
+    setCaptchaInput('');
+    const res = await fetch('/api/captcha/generate');
+    const data = await res.json();
+    setCaptchaModal({ open: true, captchaId: data?.captchaId, audioPath: data?.audioPath });
+  };
+
   useEffect(() => {
     fetchCourses();
     fetchCart();
   }, []);
+
+  const cartIdSet = useMemo(() => new Set(cart.map((c) => c.courseId)), [cart]);
 
   const colors = {
     bg: '#f6f8fb',
@@ -144,18 +183,24 @@ export default function CoursesPage() {
                   padding: '10px 14px', borderTop: `1px dashed ${colors.border}`
                 }}>
                   <div style={{ fontSize: 13, color: colors.subText }}>정원 {c.enrolled}/{c.capacity}</div>
-                  <button
-                    onClick={() => addToCart(c.courseId)}
-                    disabled={c.enrolled >= c.capacity}
-                    style={{
-                      ...buttonBase,
-                      background: (c.enrolled >= c.capacity) ? '#cbd5e1' : colors.primary,
-                      color: '#fff',
-                      cursor: (c.enrolled >= c.capacity) ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    장바구니
-                  </button>
+                  {(() => {
+                    const inCart = cartIdSet.has(c.courseId);
+                    const disabled = inCart || c.enrolled >= c.capacity;
+                    return (
+                      <button
+                        onClick={() => addToCart(c.courseId)}
+                        disabled={disabled}
+                        style={{
+                          ...buttonBase,
+                          background: disabled ? '#cbd5e1' : colors.primary,
+                          color: '#fff',
+                          cursor: disabled ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {inCart ? '담김' : '장바구니'}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
@@ -215,6 +260,35 @@ export default function CoursesPage() {
           </div>
         </aside>
       </div>
+
+      {/* CAPTCHA Modal */}
+      {captchaModal.open && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 16, width: 420 }}>
+            <h3 style={{ marginTop: 0 }}>추가 인증이 필요합니다</h3>
+            <p style={{ marginTop: 4, color: '#475569', fontSize: 14 }}>아래 오디오를 듣고 들은 단어를 입력하세요.</p>
+            <div style={{ marginTop: 8 }}>
+              <audio controls src={captchaModal.audioPath} style={{ width: '100%' }} />
+            </div>
+            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+              <input
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                placeholder="정답 입력"
+                style={{ flex: 1, padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8 }}
+              />
+              <button onClick={submitCaptcha} style={{ padding: '10px 14px', borderRadius: 8, background: '#2563eb', color: '#fff', fontWeight: 600 }}>확인</button>
+              <button onClick={refreshCaptcha} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>새로고침</button>
+            </div>
+            {captchaMsg && <p style={{ marginTop: 6, fontSize: 13, color: '#dc2626' }}>{captchaMsg}</p>}
+            <div style={{ marginTop: 8, textAlign: 'right' }}>
+              <button onClick={() => setCaptchaModal({ open: false })} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0' }}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,10 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
+try:
+    # pydantic v2
+    from pydantic import ConfigDict  # type: ignore
+except Exception:  # pragma: no cover
+    ConfigDict = dict  # type: ignore
 
 
 class Course(BaseModel):
@@ -13,8 +18,12 @@ class Course(BaseModel):
     capacity: int
     enrolled: int
 
-    class Config:
-        populate_by_name = True
+    try:
+        model_config = ConfigDict(populate_by_name=True, ser_json_by_alias=True)  # type: ignore
+    except Exception:  # pydantic v1 fallback
+        class Config:  # type: ignore
+            allow_population_by_field_name = True
+            fields = {}
 
 
 class CartAddRequest(BaseModel):
@@ -35,4 +44,26 @@ class EnrollResponse(BaseModel):
     수강신청 결과
     """
     results: List[EnrollResult]
+
+
+class CaptchaInfo(BaseModel):
+    captcha_id: str = Field(..., alias="captchaId")
+    audio_path: str = Field(..., alias="audioPath")
+    try:
+        model_config = ConfigDict(populate_by_name=True, ser_json_by_alias=True)  # type: ignore
+    except Exception:  # pydantic v1 fallback
+        class Config:  # type: ignore
+            allow_population_by_field_name = True
+            fields = {}
+
+
+class CaptchaRequiredResponse(BaseModel):
+    require_captcha: bool = Field(..., alias="requireCaptcha")
+    captcha: CaptchaInfo
+    try:
+        model_config = ConfigDict(populate_by_name=True, ser_json_by_alias=True)  # type: ignore
+    except Exception:  # pydantic v1 fallback
+        class Config:  # type: ignore
+            allow_population_by_field_name = True
+            fields = {}
 

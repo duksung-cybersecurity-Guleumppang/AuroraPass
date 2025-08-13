@@ -7,11 +7,12 @@ type Captcha = { captchaId: string; audioPath: string };
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const defaultUsername = useMemo(() => import.meta.env.VITE_LOGIN_USERNAME || '', []);
-  const defaultPassword = useMemo(() => import.meta.env.VITE_LOGIN_PASSWORD || '', []);
+  // 초기값은 비워둡니다. (.env 값은 placeholder로만 사용)
+  const placeholderUsername = useMemo(() => '', []);
+  const placeholderPassword = useMemo(() => '', []);
 
-  const [username, setUsername] = useState(defaultUsername);
-  const [password, setPassword] = useState(defaultPassword);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [captcha, setCaptcha] = useState<Captcha | null>(null);
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaMsg, setCaptchaMsg] = useState('');
@@ -93,7 +94,7 @@ export default function LoginPage() {
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="아이디"
+            placeholder={placeholderUsername}
             style={{ padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8 }}
           />
 
@@ -102,7 +103,7 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호"
+            placeholder={placeholderPassword}
             style={{ padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8 }}
           />
 

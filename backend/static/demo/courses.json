@@ -22,6 +22,14 @@
     "schedule": "수 13:00-14:30",
     "capacity": 1,
     "enrolled": 0
+  },
+  {
+    "courseId": "CS5401",
+    "title": "사이버보안개론",
+    "professor": "김희연",
+    "schedule": "목 13:00-14:30",
+    "capacity": 3,
+    "enrolled": 0
   }
 ]
 

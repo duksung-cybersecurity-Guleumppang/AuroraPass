@@ -31,9 +31,9 @@
 
 ### 요구사항
 
-- Docker, Docker Compose
+- Docker Desktop (Docker, Docker Compose 포함)
 
-### 실행 방법
+### 실행 방법 (Docker Compose 권장)
 
 1) 컨테이너 빌드 및 기동
 ```bash
@@ -44,7 +44,18 @@ docker compose up --build -d
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8000`
 
-3) 환경변수(선택)
+3) 종료
+```bash
+docker compose down
+```
+
+4) 로그 확인(문제 발생 시)
+```bash
+docker compose logs backend -n 200 | cat
+docker compose logs frontend -n 200 | cat
+```
+
+5) 환경변수(선택)
 - 프론트 로그인 폼 기본값을 지정하려면 `frontend/.env` 파일을 생성하세요.
 ```bash
 VITE_LOGIN_USERNAME=demo_user
@@ -60,11 +71,43 @@ LOGIN_USERNAME=demo_user
 LOGIN_PASSWORD=demo_password
 ```
 
+### 로컬 개발 실행 (옵션)
+
+도커 없이 각각 실행해 개발할 때 사용합니다.
+
+- 백엔드(FastAPI)
+```bash
+# uv 사용 권장 (미설치 시 https://docs.astral.sh/uv/ 참고)
+cd backend
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+- 프론트엔드(Vite + React + TypeScript)
+```bash
+cd frontend
+bun install
+bun run dev -- --host --port 3000
+```
+
+프론트 개발 서버는 프록시로 `/api`, `/static`을 `http://localhost:8000`으로 전달합니다.
+
 ## 개발 메모
 
 - 프론트엔드 개발 서버는 Bun 기반(`oven/bun`)으로 동작합니다.
 - 정적 오디오 파일은 백엔드에서 `/static/audio/*.wav` 경로로 서빙됩니다.
 - 추후 구현 예정: 로그인/세션, 강의/장바구니/수강신청 API, 비정상 접근 탐지/재CAPTCHA, DB 영속화.
+
+### 비정상 접근(CAPTCHA) 트리거
+- 동일 사용자 기준 3초 내 5회 이상 요청 시 서버가 CAPTCHA를 요구합니다.
+- 적용 경로: `/api/courses`, `/api/cart`(GET/POST/DELETE), `/api/enroll`, `/api/my-courses`
+- 응답 예(요구 시):
+```json
+{
+  "requireCaptcha": true,
+  "captcha": { "captchaId": "...", "audioPath": "/static/audio/sample1.wav" }
+}
+```
+프론트에서 모달로 오디오 재생/정답 제출 후 `/api/enroll/unlock`을 통해 1회 신청이 허용됩니다.
 
 ### CAPTCHA 정답 데이터
 - 정답은 JSON 파일로 관리됩니다: `backend/static/audio/captcha_answers.json`
