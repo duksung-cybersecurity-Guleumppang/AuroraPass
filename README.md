@@ -1,6 +1,6 @@
-# 수강신청 시스템 프로젝트
+# Aurora Pass - 수강신청 시스템
 
-캡차가 적용된 수강신청 시스템입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 Docker Compose로 통합 실행합니다.
+캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 Docker Compose로 통합 실행합니다.
 
 ## 프로젝트 구조
 
@@ -9,7 +9,7 @@
 - `docs/`: API 명세 문서
 - `docker-compose.yml`: 백/프론트 컨테이너 정의
 
-## 현재 구현 범위
+## 현재 구현 범위(요약)
 
 - 백엔드 API
   - `GET /api/captcha/generate`: 오디오 CAPTCHA 발급 (오디오 경로/ID)
@@ -23,8 +23,9 @@
   - `POST /api/enroll`: 본 신청(정원/중복 간단 처리)
   - `GET /api/my-courses`: 신청 결과 조회
 - 프론트엔드
-  - 로그인 페이지 UI: 배경/로고, 아이디/비밀번호, 오디오 CAPTCHA(새로고침/검증), CAPTCHA 성공 시 로그인 버튼 활성화 → 성공 시 `/courses` 이동
-  - 수강신청 페이지 UI(`/courses`): 카드형 강의 목록, 장바구니 패널, 본 신청 버튼(데모 API 연동)
+  - 로그인 페이지 UI: 배경/로고, 아이디/비밀번호(초기 빈칸), 오디오 CAPTCHA(새로고침/검증), CAPTCHA 성공 시 로그인 버튼 활성화 → 성공 시 `/courses` 이동
+  - 수강신청 페이지 UI(`/courses`): 카드형 강의 목록, 장바구니 패널, 본 신청 버튼(데모 API 연동), 담긴 과목은 버튼이 '담김'으로 비활성화 표시
+  - 전역 빠른 클릭 감지: 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달 표시(5.png 흐름)
   - 개발 서버 프록시: `/api`, `/static` → `backend:8000`
 
 ## 시작하기
@@ -98,7 +99,8 @@ bun run dev -- --host --port 3000
 - 추후 구현 예정: 로그인/세션, 강의/장바구니/수강신청 API, 비정상 접근 탐지/재CAPTCHA, DB 영속화.
 
 ### 비정상 접근(CAPTCHA) 트리거
-- 동일 사용자 기준 3초 내 5회 이상 요청 시 서버가 CAPTCHA를 요구합니다.
+- 프론트(UI): 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달을 표시합니다.
+- 백엔드(API): 동일 사용자 기준 3초 내 5회 이상 요청 시 서버가 CAPTCHA를 요구합니다.
 - 적용 경로: `/api/courses`, `/api/cart`(GET/POST/DELETE), `/api/enroll`, `/api/my-courses`
 - 응답 예(요구 시):
 ```json
@@ -108,6 +110,12 @@ bun run dev -- --host --port 3000
 }
 ```
 프론트에서 모달로 오디오 재생/정답 제출 후 `/api/enroll/unlock`을 통해 1회 신청이 허용됩니다.
+
+## 구현 상세(확인용 체크리스트)
+- 로그인 플로우: 아이디/비밀번호 입력 → 오디오 CAPTCHA 성공 → 로그인 API(`/api/users/login`) 성공 시 `/courses` 이동
+- 수강신청 플로우: 강의 목록 → 장바구니 담기/제거 → 본 신청(`/api/enroll`) → 결과 메시지 표시 및 정원/상태 갱신
+- 장바구니 버튼 상태: 이미 담긴 과목 또는 정원 초과 과목은 비활성화
+- 데모 데이터/정답 파일: 변경 즉시 반영, 백엔드 재시작으로 인메모리 상태 초기화
 
 ### CAPTCHA 정답 데이터
 - 정답은 JSON 파일로 관리됩니다: `backend/static/audio/captcha_answers.json`

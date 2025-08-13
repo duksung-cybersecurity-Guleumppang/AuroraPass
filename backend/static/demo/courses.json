@@ -1,5 +1,13 @@
 [
   {
+    "courseId": "CS5501",
+    "title": "졸린데안졸린척하는법",
+    "professor": "대김희연",
+    "schedule": "월 9:00-15:30",
+    "capacity": 2,
+    "enrolled": 0
+  },
+  {
     "courseId": "CS101",
     "title": "컴퓨터개론",
     "professor": "김교수",
@@ -26,7 +34,7 @@
   {
     "courseId": "CS5401",
     "title": "사이버보안개론",
-    "professor": "김희연",
+    "professor": "킹갓김희연",
     "schedule": "목 13:00-14:30",
     "capacity": 3,
     "enrolled": 0

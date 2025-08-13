@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 type Course = {
   courseId: string;
@@ -17,30 +17,64 @@ export default function CoursesPage() {
   const [captchaModal, setCaptchaModal] = useState<{ open: boolean; captchaId?: string; audioPath?: string }>({ open: false });
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaMsg, setCaptchaMsg] = useState('');
+  const [uiCaptchaRequired, setUiCaptchaRequired] = useState(false);
+  const clickTimesRef = useRef<number[]>([]);
+
+  const openCaptchaIfNeeded = (data: any): boolean => {
+    if (uiCaptchaRequired) {
+      if (!captchaModal.open) {
+        // already required on UI, ensure modal is open
+        refreshCaptcha();
+      }
+      return true;
+    }
+    const requireCaptcha = data?.requireCaptcha ?? data?.require_captcha;
+    if (requireCaptcha) {
+      const cap = data?.captcha || {};
+      setCaptchaModal({
+        open: true,
+        captchaId: cap.captchaId || cap.captcha_id,
+        audioPath: cap.audioPath || cap.audio_path
+      });
+      setUiCaptchaRequired(true);
+      return true;
+    }
+    return false;
+  };
 
   const fetchCourses = async () => {
     const res = await fetch('/api/courses');
-    const data = await res.json();
-    setCourses(data);
+    let data: any = [];
+    try { data = await res.json(); } catch {}
+    if (openCaptchaIfNeeded(data)) return;
+    setCourses(Array.isArray(data) ? data : []);
   };
 
   const fetchCart = async () => {
     const res = await fetch('/api/cart');
-    const data = await res.json();
-    setCart(data);
+    let data: any = [];
+    try { data = await res.json(); } catch {}
+    if (openCaptchaIfNeeded(data)) return;
+    setCart(Array.isArray(data) ? data : []);
   };
 
   const addToCart = async (courseId: string) => {
-    await fetch('/api/cart', {
+    const res = await fetch('/api/cart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ courseId })
     });
+    let data: any = {};
+    try { data = await res.json(); } catch {}
+    if (openCaptchaIfNeeded(data)) return;
     fetchCart();
   };
 
   const removeFromCart = async (courseId: string) => {
-    await fetch(`/api/cart/${courseId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/cart/${courseId}`, { method: 'DELETE' });
+    let data: any = {};
+    try { data = await res.json(); } catch {}
+    if (openCaptchaIfNeeded(data)) return;
     fetchCart();
   };
 
@@ -51,12 +85,7 @@ export default function CoursesPage() {
       const res = await fetch('/api/enroll', { method: 'POST' });
       let data: any = null;
       try { data = await res.json(); } catch {}
-      const requireCaptcha = data?.requireCaptcha ?? data?.require_captcha;
-      if (requireCaptcha) {
-        const cap = data?.captcha || {};
-        setCaptchaModal({ open: true, captchaId: cap.captchaId || cap.captcha_id, audioPath: cap.audioPath || cap.audio_path });
-        return;
-      }
+      if (openCaptchaIfNeeded(data)) return;
       const okCount = (data?.results || []).filter((r: any) => r.success).length;
       const failCount = (data?.results || []).length - okCount;
       setMessage(`신청 완료: 성공 ${okCount}건, 실패 ${failCount}건`);
@@ -79,6 +108,8 @@ export default function CoursesPage() {
     if (data?.success) {
       setCaptchaModal({ open: false });
       setCaptchaInput('');
+      setUiCaptchaRequired(false);
+      clickTimesRef.current = [];
       // 1회 허용으로 즉시 재시도
       await enroll();
     } else {
@@ -261,6 +292,16 @@ export default function CoursesPage() {
         </aside>
       </div>
 
+      {/* Global fast-click detector */}
+      <ClickDetector
+        enabled
+        onTrigger={async () => {
+          setUiCaptchaRequired(true);
+          await refreshCaptcha();
+        }}
+        clickTimesRef={clickTimesRef}
+      />
+
       {/* CAPTCHA Modal */}
       {captchaModal.open && (
         <div style={{
@@ -291,6 +332,27 @@ export default function CoursesPage() {
       )}
     </div>
   );
+}
+
+function ClickDetector({ enabled, onTrigger, clickTimesRef }: { enabled: boolean; onTrigger: () => void | Promise<void>; clickTimesRef: React.MutableRefObject<number[]> }) {
+  useEffect(() => {
+    if (!enabled) return;
+    const handler = () => {
+      const now = Date.now();
+      const windowMs = 3000;
+      const threshold = 5;
+      const filtered = clickTimesRef.current.filter((t) => now - t < windowMs);
+      filtered.push(now);
+      clickTimesRef.current = filtered;
+      if (filtered.length >= threshold) {
+        clickTimesRef.current = [];
+        onTrigger();
+      }
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [enabled, onTrigger, clickTimesRef]);
+  return null;
 }
 
 
