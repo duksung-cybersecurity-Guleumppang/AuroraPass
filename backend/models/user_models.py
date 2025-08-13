@@ -17,3 +17,19 @@ class UserRegisterResponse(BaseModel):
     user_id: str = Field(..., alias="userId", description="생성된 사용자의 고유 ID")
     username: str
     message: str
+
+
+class UserLoginRequest(BaseModel):
+    """
+    사용자 로그인 요청 모델
+    """
+    username: str = Field(..., description="아이디")
+    password: str = Field(..., description="비밀번호")
+
+
+class UserLoginResponse(BaseModel):
+    """
+    사용자 로그인 성공 응답 모델
+    """
+    success: bool
+    message: str

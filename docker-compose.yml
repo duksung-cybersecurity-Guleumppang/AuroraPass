@@ -7,6 +7,9 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    environment:
+      - LOGIN_USERNAME=${LOGIN_USERNAME:-demo_user}
+      - LOGIN_PASSWORD=${LOGIN_PASSWORD:-demo_password}
 
   frontend:
     build: ./frontend

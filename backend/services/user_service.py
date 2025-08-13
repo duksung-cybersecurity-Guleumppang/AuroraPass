@@ -1,7 +1,9 @@
+import os
 import uuid
 from typing import Dict, Optional
 
-from models.user_models import UserRegisterRequest
+from dotenv import load_dotenv
+from models.user_models import UserRegisterRequest, UserLoginRequest
 from services.captcha_service import captcha_service
 
 # 실제 운영 환경에서는 PostgreSQL, MySQL 같은 관계형 데이터베이스를 사용해야 합니다.
@@ -51,6 +53,23 @@ class UserService:
         print(f"User Registered: {new_user}") # 디버깅용 로그
         
         return new_user
+
+    def login_user(self, request: UserLoginRequest) -> bool:
+        """
+        환경변수(LOGIN_USERNAME, LOGIN_PASSWORD)와 비교하여 로그인 검증을 수행합니다.
+        실제 서비스에서는 해시 검증 및 DB를 사용해야 합니다.
+        """
+        # 컨테이너/프로세스 환경에서 .env를 로드(존재 시)
+        load_dotenv(override=False)
+
+        expected_username = os.getenv("LOGIN_USERNAME", "")
+        expected_password = os.getenv("LOGIN_PASSWORD", "")
+
+        is_valid = (
+            request.username == expected_username and request.password == expected_password
+        )
+
+        return is_valid
 
 # 서비스 인스턴스 생성
 user_service = UserService()

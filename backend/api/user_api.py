@@ -1,5 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
-from models.user_models import UserRegisterRequest, UserRegisterResponse
+from models.user_models import (
+    UserRegisterRequest,
+    UserRegisterResponse,
+    UserLoginRequest,
+    UserLoginResponse,
+)
 from services.user_service import user_service
 
 router = APIRouter(
@@ -44,6 +49,26 @@ async def register_user(request: UserRegisterRequest):
     except Exception as e:
         # 기타 예상치 못한 서버 오류
         print(f"Error registering user: {e}") # 로깅
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="서버 내부 오류가 발생했습니다.",
+        )
+
+@router.post(
+    "/login",
+    response_model=UserLoginResponse,
+    status_code=status.HTTP_200_OK,
+    summary="사용자 로그인",
+    description=".env의 LOGIN_USERNAME/LOGIN_PASSWORD와 비교하여 로그인 검증을 수행합니다.",
+)
+async def login_user(request: UserLoginRequest):
+    try:
+        ok = user_service.login_user(request)
+        if not ok:
+            return UserLoginResponse(success=False, message="아이디 또는 비밀번호가 올바르지 않습니다.")
+        return UserLoginResponse(success=True, message="로그인에 성공했습니다.")
+    except Exception as e:
+        print(f"Error on login: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="서버 내부 오류가 발생했습니다.",

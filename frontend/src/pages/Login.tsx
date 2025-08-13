@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaMsg, setCaptchaMsg] = useState('');
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [loginMsg, setLoginMsg] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const fetchCaptcha = async () => {
     setCaptchaMsg('');
@@ -36,9 +38,23 @@ export default function LoginPage() {
     setCaptchaVerified(!!data.success);
   };
 
-  const onLogin = () => {
-    // 로그인 API는 추후 구현 예정. 현재는 UI 동작 확인용 처리.
-    alert(`로그인 시도\nID: ${username}`);
+  const onLogin = async () => {
+    if (!captchaVerified) return;
+    setLoggingIn(true);
+    setLoginMsg('');
+    try {
+      const res = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      setLoginMsg(data?.message ?? '');
+    } catch (e) {
+      setLoginMsg('로그인 요청 중 오류가 발생했습니다.');
+    } finally {
+      setLoggingIn(false);
+    }
   };
 
   useEffect(() => { fetchCaptcha(); }, []);
@@ -109,20 +125,21 @@ export default function LoginPage() {
 
           <button
             onClick={onLogin}
-            disabled={!captchaVerified || !username || !password}
+            disabled={loggingIn || !captchaVerified || !username || !password}
             style={{
               marginTop: 14,
               padding: '12px 14px',
               borderRadius: 10,
               border: 'none',
               color: 'white',
-              background: (!captchaVerified || !username || !password) ? '#b5c0c9' : '#2563eb',
-              cursor: (!captchaVerified || !username || !password) ? 'not-allowed' : 'pointer',
+              background: (loggingIn || !captchaVerified || !username || !password) ? '#b5c0c9' : '#2563eb',
+              cursor: (loggingIn || !captchaVerified || !username || !password) ? 'not-allowed' : 'pointer',
               fontWeight: 600
             }}
           >
-            로그인
+            {loggingIn ? '로그인 중…' : '로그인'}
           </button>
+          {loginMsg && <p style={{ marginTop: 8, fontSize: 13 }}>{loginMsg}</p>}
         </div>
       </div>
     </div>

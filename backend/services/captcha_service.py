@@ -1,3 +1,5 @@
+import os
+import json
 import uuid
 import random
 from typing import Dict, Tuple
@@ -6,12 +8,22 @@ from typing import Dict, Tuple
 # 여기서는 간단한 인메모리 딕셔너리를 사용하여 CAPTCHA의 정답을 관리합니다.
 captcha_storage: Dict[str, str] = {}
 
-# 사용 가능한 오디오 파일과 정답 매핑
-# 실제로는 오디오 파일을 동적으로 생성하고, 복잡한 단어를 사용해야 합니다.
-available_captchas: Dict[str, str] = {
-    "/static/audio/sample1.wav": "apple",
-    "/static/audio/sample2.wav": "banana"
-}
+def _load_available_captchas() -> Dict[str, str]:
+    """
+    backend/static/audio/captcha_answers.json 을 로드하여
+    {"sample1.wav": "apple", ...} 형태를
+    {"/static/audio/sample1.wav": "apple", ...} 로 변환합니다.
+    """
+    answers_path = os.path.join(os.path.dirname(__file__), "..", "static", "audio", "captcha_answers.json")
+    answers_path = os.path.abspath(answers_path)
+    with open(answers_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    mapping: Dict[str, str] = {}
+    for filename, answer in data.items():
+        mapping[f"/static/audio/{filename}"] = answer
+    return mapping
+
+available_captchas: Dict[str, str] = _load_available_captchas()
 
 class CaptchaService:
     """
