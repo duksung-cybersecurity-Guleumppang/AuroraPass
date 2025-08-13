@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from api import captcha_api, user_api
+from api import captcha_api, user_api, courses_api
 
 # FastAPI 애플리케이션 생성
 app = FastAPI(
@@ -12,6 +12,7 @@ app = FastAPI(
 # API 라우터 등록
 app.include_router(captcha_api.router)
 app.include_router(user_api.router)
+app.include_router(courses_api.router)
 
 # 정적 파일 마운트 (CAPTCHA 오디오 파일 제공)
 # /static 경로로 오는 요청을 static 폴더에서 찾도록 설정합니다.

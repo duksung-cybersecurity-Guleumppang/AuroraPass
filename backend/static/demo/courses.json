@@ -1,0 +1,28 @@
+[
+  {
+    "courseId": "CS101",
+    "title": "컴퓨터개론",
+    "professor": "김교수",
+    "schedule": "월 09:00-10:30",
+    "capacity": 2,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS201",
+    "title": "자료구조",
+    "professor": "박교수",
+    "schedule": "화 10:30-12:00",
+    "capacity": 1,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS301",
+    "title": "운영체제",
+    "professor": "이교수",
+    "schedule": "수 13:00-14:30",
+    "capacity": 1,
+    "enrolled": 0
+  }
+]
+
+

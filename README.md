@@ -16,8 +16,15 @@
   - `POST /api/captcha/verify`: CAPTCHA 검증
   - `POST /api/users/register`: 회원가입(CAPTCHA 성공 필수, 인메모리 저장)
   - `POST /api/users/login`: 로그인(.env 또는 환경변수의 `LOGIN_USERNAME`/`LOGIN_PASSWORD`와 비교)
+  - `GET /api/courses`: 강의 목록 조회
+  - `GET /api/cart`: 장바구니 조회
+  - `POST /api/cart`: 장바구니 추가
+  - `DELETE /api/cart/{courseId}`: 장바구니 제거
+  - `POST /api/enroll`: 본 신청(정원/중복 간단 처리)
+  - `GET /api/my-courses`: 신청 결과 조회
 - 프론트엔드
-  - 로그인 페이지 UI: 배경/로고, 아이디/비밀번호, 오디오 CAPTCHA(새로고침/검증), CAPTCHA 성공 시 로그인 버튼 활성화
+  - 로그인 페이지 UI: 배경/로고, 아이디/비밀번호, 오디오 CAPTCHA(새로고침/검증), CAPTCHA 성공 시 로그인 버튼 활성화 → 성공 시 `/courses` 이동
+  - 수강신청 페이지 UI(`/courses`): 카드형 강의 목록, 장바구니 패널, 본 신청 버튼(데모 API 연동)
   - 개발 서버 프록시: `/api`, `/static` → `backend:8000`
 
 ## 시작하기
@@ -68,6 +75,10 @@ LOGIN_PASSWORD=demo_password
   "sample2.wav": "banana"
 }
 ```
+
+### 강의 데모 데이터
+- 강의 목록 데모 데이터는 JSON 파일로 관리됩니다: `backend/static/demo/courses.json`
+- 값을 수정하면 API와 UI에 반영됩니다.
 
 ## API 명세 문서
 

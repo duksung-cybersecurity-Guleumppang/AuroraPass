@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import bgImage from '../../images/Home_screen_background.jpg';
 import logoImage from '../../images/logo.jpg';
 
 type Captcha = { captchaId: string; audioPath: string };
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const defaultUsername = useMemo(() => import.meta.env.VITE_LOGIN_USERNAME || '', []);
   const defaultPassword = useMemo(() => import.meta.env.VITE_LOGIN_PASSWORD || '', []);
 
@@ -50,6 +52,9 @@ export default function LoginPage() {
       });
       const data = await res.json();
       setLoginMsg(data?.message ?? '');
+      if (data?.success) {
+        navigate('/courses');
+      }
     } catch (e) {
       setLoginMsg('로그인 요청 중 오류가 발생했습니다.');
     } finally {
