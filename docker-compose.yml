@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   backend:
     build:
@@ -16,5 +15,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    command: sh -lc "bun install && bun run dev"
     depends_on:
       - backend
