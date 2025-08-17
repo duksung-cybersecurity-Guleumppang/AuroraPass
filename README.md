@@ -38,12 +38,13 @@
 
 1) 컨테이너 빌드 및 기동
 ```bash
-docker compose up --build -d
+docker compose up --build
 ```
 
 2) 접속 주소
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8000`
+- Backend Docs: `http://localhost:8000/docs`
 
 3) 종료
 ```bash
@@ -57,15 +58,7 @@ docker compose logs frontend -n 200 | cat
 ```
 
 5) 환경변수(선택)
-- 프론트 로그인 폼 기본값을 지정하려면 `frontend/.env` 파일을 생성하세요.
-```bash
-VITE_LOGIN_USERNAME=demo_user
-VITE_LOGIN_PASSWORD=demo_password
-```
-
 - 백엔드 로그인 비교용 환경변수는 `LOGIN_USERNAME`, `LOGIN_PASSWORD` 입니다.
-  - 기본값은 `docker-compose.yml`의 `backend.environment`에서 주입됩니다.
-  - 필요 시 루트 `.env` 또는 `backend/.env`에 동일 키를 설정하면 `python-dotenv`가 로드합니다.
 
 ```bash
 LOGIN_USERNAME=demo_user
@@ -119,13 +112,6 @@ bun run dev -- --host --port 3000
 
 ### CAPTCHA 정답 데이터
 - 정답은 JSON 파일로 관리됩니다: `backend/static/audio/captcha_answers.json`
-- 예시
-```json
-{
-  "sample1.wav": "apple",
-  "sample2.wav": "banana"
-}
-```
 
 ### 강의 데모 데이터
 - 강의 목록 데모 데이터는 JSON 파일로 관리됩니다: `backend/static/demo/courses.json`
