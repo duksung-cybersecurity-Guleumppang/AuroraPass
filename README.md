@@ -59,7 +59,7 @@ docker compose logs backend -n 50
 docker compose logs frontend -n 50
 ```
 
-## 🔍 데이터베이스 확인 방법
+## 데이터베이스 확인 방법
 
 ### PostgreSQL 조회
 ```bash
@@ -174,6 +174,23 @@ Internet → ALB → ECS Fargate Tasks → RDS PostgreSQL
 3. **이미지 기반**: ECR 레지스트리에서 배포 이미지 pull
 4. **ECS 태스크 정의**: Docker Compose를 ECS 태스크로 변환 시 참고
 
+### AWS 배포 빠른 시작 (TL;DR)
+```bash
+# 0) 변수 채우기
+cp deploy.env.example deploy.env
+# deploy.env 열어 AWS_REGION, ACCOUNT_ID, IMAGE_TAG, DATABASE_URL, REDIS_URL 채우기
+
+# 1) ECR 로그인 + 이미지 빌드/푸시 자동화
+./scripts/deploy.sh
+
+# 2) ECS(콘솔)에서 서비스의 태스크 정의 이미지 태그를 IMAGE_TAG로 갱신
+#    → 백엔드/프론트엔드 모두 Force new deployment
+
+# 3) ALB DNS로 접속해 확인
+curl http://<alb-dns>/readyz   # 백엔드 상태
+open http://<alb-dns>/         # 프론트엔드 화면
+```
+
 ## AWS 배포 방법
 
 AWS 콘솔/CLI를 이용해 ECS Fargate + ALB + RDS + ElastiCache로 배포하는 방법입니다.
@@ -203,7 +220,7 @@ TAG=$(git rev-parse --short HEAD || date +%s)
 docker buildx build \
   -t $ECR/aurora-backend:$TAG \
   -f backend/Dockerfile \
- s --platform linux/amd64 \
+  --platform linux/amd64 \
   --push .
 
 # Frontend
@@ -255,6 +272,29 @@ aws secretsmanager create-secret \
    - 보안 그룹: ALB ↔ ECS, ECS → RDS/Redis 허용
    - 오토스케일은 1개로 시작
 
+### 5-1) docker-compose.prod.yml 변수 채우기 가이드
+`docker-compose.prod.yml`은 운영 템플릿입니다. 실제 ECS에 직접 적용하지 않아도, "무엇을 채워야 하는지"를 보여주는 기준으로 사용합니다.
+
+- `${ECR_REGISTRY}`: `<ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com`
+- `${IMAGE_TAG}`: 배포할 이미지 태그(예: 커밋 해시 또는 날짜)
+- `${AWS_REGION}`: 예) `ap-northeast-2`
+- `${DATABASE_URL}`: RDS 연결 문자열
+  - 예) `postgresql+psycopg2://<user>:<password>@<rds-endpoint>:5432/<dbname>`
+- `${REDIS_URL}`: ElastiCache Redis 연결 문자열
+  - 예) `redis://<redis-endpoint>:6379/0`
+
+예시(치환 후 개념적으로 이런 값이 들어갑니다):
+```yaml
+services:
+  backend:
+    image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/aurora-backend:20250101
+    environment:
+      - PORT=8000
+      - DATABASE_URL=postgresql+psycopg2://appuser:apppass@aurora.xxxxxx.ap-northeast-2.rds.amazonaws.com:5432/aurora
+      - REDIS_URL=redis://aurora-redis.xxxxxx.apn2.cache.amazonaws.com:6379/0
+      - AWS_DEFAULT_REGION=ap-northeast-2
+```
+
 ### 6) ALB 구성 (경로 기반 라우팅)
 1. ALB 생성(퍼블릭 서브넷, 보안그룹 80/443 허용)
 2. Target Group 2개:
@@ -283,6 +323,38 @@ curl http://<alb-dns>/              # 프론트엔드
 - ECS 서비스 상태 및 태스크 모니터링  
 - ALB Target Group 헬스체크 상태 점검
 
+### 10) 리전 변경 팁
+- `deploy.env`와 `docker-compose.prod.yml`에서 `${AWS_REGION}`만 변경하면 됩니다.
+- ECR 레지스트리 도메인도 자동으로 리전에 맞게 바뀝니다: `<ACCOUNT_ID>.dkr.ecr.${AWS_REGION}.amazonaws.com`
+
+### 11) IAM 권한(최소 필요 예시)
+- ECR: `ecr:*`(push/pull), 최소한 `ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:CompleteLayerUpload`, `ecr:InitiateLayerUpload`, `ecr:PutImage`, `ecr:UploadLayerPart`
+- ECS: 서비스/태스크 정의 조회/배포(`ecs:*Describe*`, `ecs:UpdateService`, `iam:PassRole`)
+- CloudWatch Logs: 로그 그룹 생성/쓰기
+- Secrets Manager(선택): `secretsmanager:GetSecretValue`
+
+### 12) 자주 겪는 오류와 해결법 (Troubleshooting)
+- ALB 502/503: Target Group 헬스체크 실패 → 보안그룹/서브넷, 포트(8000/3000) 개방, 헬스엔드포인트(`/healthz`/`/`) 재확인
+- 백엔드 기동 실패: `DATABASE_URL` 또는 `REDIS_URL` 오타/보안그룹 미설정 → 접속 문자열과 SG 규칙 점검
+- 이미지 아키텍처 불일치: `--platform linux/amd64` 누락 → buildx 명령 재실행
+- 로그가 안 보임: awslogs 설정과 권한 확인(로그 그룹 `/ecs/aurora-backend`, `/ecs/aurora-frontend`)
+- RDS 연결 간헐 실패: 파라미터 그룹/서브넷 그룹, 멀티AZ 구성, 커넥션 수 제한 확인
+
+### 13) 정리(Cleanup)
+```bash
+# 태그 이미지 삭제
+aws ecr batch-delete-image \
+  --repository-name aurora-backend \
+  --image-ids imageTag=$TAG --region $AWS_REGION || true
+aws ecr batch-delete-image \
+  --repository-name aurora-frontend \
+  --image-ids imageTag=$TAG --region $AWS_REGION || true
+
+# (선택) 리포지토리 삭제
+aws ecr delete-repository --repository-name aurora-backend --force --region $AWS_REGION || true
+aws ecr delete-repository --repository-name aurora-frontend --force --region $AWS_REGION || true
+```
+
 ### 배포 스크립트 사용(요약)
 배포는 환경변수를 채우고 로컬 스크립트를 실행하면 ECR까지 자동으로 진행됩니다. ECS 서비스 업데이트는 마지막에 한 번 콘솔에서 수행합니다.
 
@@ -306,6 +378,16 @@ cp deploy.env.example deploy.env
 - ALB Target Group 헬스체크 및 CloudWatch Logs로 정상 동작 확인
 
 참고: `scripts/deploy.sh`는 ECR 로그인/이미지 빌드 및 푸시까지 수행하며, ECS 서비스 업데이트는 안전을 위해 자동화하지 않았습니다.
+변수 설명(예시):
+```env
+# deploy.env
+AWS_REGION=ap-northeast-2
+ACCOUNT_ID=123456789012
+ECR_REGISTRY=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+IMAGE_TAG=20250101
+DATABASE_URL=postgresql+psycopg2://appuser:apppass@aurora.xxxxxx.ap-northeast-2.rds.amazonaws.com:5432/aurora
+REDIS_URL=redis://aurora-redis.xxxxxx.apn2.cache.amazonaws.com:6379/0
+```
 
 ##  주요 기능
 
@@ -345,15 +427,6 @@ bun run dev -- --host --port 3000
 - **생성**: DB에서 랜덤 선택 → Redis에 정답 저장 (TTL 5분)
 - **제공**: `/api/captcha/audio/{id}`로 PostgreSQL에서 바이너리 스트리밍  
 - **검증**: Redis 정답 확인 → 성공 시 30초간 임시 토큰 발급
-
-## 📈 향후 개선 방향
-
-1. **인증/권한**: JWT 기반 실제 로그인 시스템
-2. **마이그레이션**: Alembic 도입으로 스키마 버저닝
-3. **모니터링**: Prometheus + Grafana 메트릭 수집
-4. **로그 집계**: ELK 스택 또는 Loki 중앙화
-5. **성능 최적화**: 커넥션 풀링, 쿼리 최적화
-6. **보안 강화**: HTTPS, 입력 검증, SQL 인젝션 방어
 
 ---
 
