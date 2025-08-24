@@ -1,4 +1,38 @@
 services:
+  postgres:
+    image: postgres:15
+    container_name: aurora_postgres
+    environment:
+      - POSTGRES_DB=aurora
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppass
+    ports:
+      - "5432:5432"
+    volumes:
+      - aurora_pgdata:/var/lib/postgresql/data
+      - ./backend/db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U appuser -d aurora" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [ app-net ]
+
+  redis:
+    image: redis:7-alpine
+    container_name: aurora_redis
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - aurora_redisdata:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [ app-net ]
+
   backend:
     build:
       context: .
@@ -7,9 +41,14 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    environment:
-      - LOGIN_USERNAME=${LOGIN_USERNAME}
-      - LOGIN_PASSWORD=${LOGIN_PASSWORD}
+    env_file:
+      - ./.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ app-net ]
 
   frontend:
     build: ./frontend
@@ -21,3 +60,13 @@ services:
     command: sh -lc "bun install && bun run dev"
     depends_on:
       - backend
+    networks: [ app-net ]
+
+volumes:
+  aurora_pgdata:
+  aurora_redisdata:
+
+
+networks:
+  app-net:
+    driver: bridge

@@ -1,15 +1,10 @@
 import os
-import uuid
 from typing import Dict, Optional
 
 from dotenv import load_dotenv
 from models.user_models import UserRegisterRequest, UserLoginRequest
 from services.captcha_service import captcha_service
-
-# 실제 운영 환경에서는 PostgreSQL, MySQL 같은 관계형 데이터베이스를 사용해야 합니다.
-# 여기서는 간단한 인메모리 딕셔너리를 사용하여 사용자 정보를 관리합니다.
-# key: username, value: user_data
-user_db: Dict[str, Dict] = {}
+from repositories.user_repository import user_repository
 
 class UserService:
     """
@@ -30,29 +25,24 @@ class UserService:
         if not captcha_service.verify_captcha(request.captcha_id, request.user_input):
             raise ValueError("CAPTCHA 인증에 실패했습니다.")
 
-        # 2. 사용자 정보 중복 확인
-        if request.username in user_db:
-            raise ValueError("이미 사용 중인 아이디입니다.")
-        
-        for user in user_db.values():
-            if user["email"] == request.email:
-                raise ValueError("이미 사용 중인 이메일입니다.")
-
-        # 3. 새 사용자 생성 및 저장
-        # 실제로는 비밀번호를 해싱하여 저장해야 합니다. (예: passlib 라이브러리 사용)
-        new_user_id = str(uuid.uuid4())
-        new_user = {
-            "user_id": new_user_id,
-            "username": request.username,
-            "email": request.email,
-            "password_hash": f"hashed_{request.password}", # 실제 해싱 로직으로 대체 필요
-        }
-        
-        user_db[request.username] = new_user
-        
-        print(f"User Registered: {new_user}") # 디버깅용 로그
-        
-        return new_user
+        # 2. 새 사용자 생성 (중복 확인은 repository에서 처리)
+        try:
+            new_user = user_repository.create_user(
+                username=request.username,
+                email=request.email,
+                password=request.password
+            )
+            
+            print(f"User Registered: {new_user.username} ({new_user.id})")  # 디버깅용 로그
+            
+            return {
+                "user_id": str(new_user.id),
+                "username": new_user.username,
+                "email": new_user.email
+            }
+        except ValueError as e:
+            # Repository에서 발생한 중복 에러를 그대로 전파
+            raise e
 
     def login_user(self, request: UserLoginRequest) -> bool:
         """

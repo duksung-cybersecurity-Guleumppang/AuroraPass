@@ -1,125 +1,360 @@
 # Aurora Pass - 수강신청 시스템
 
-캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 Docker Compose로 통합 실행합니다.
+캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 **PostgreSQL + Redis**를 활용한 완전한 DB 기반 아키텍처입니다.
 
-## 프로젝트 구조
+## 데이터베이스 구성
 
-- `backend/`: FastAPI 백엔드 (오디오 CAPTCHA/회원가입 구현)
-- `frontend/`: Vite + React + TypeScript 프론트엔드 (로그인 UI, 오디오 CAPTCHA 연동)
-- `docs/`: API 명세 문서
-- `docker-compose.yml`: 백/프론트 컨테이너 정의
+### **PostgreSQL 15** (관계형 데이터)
+- **6개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**
+- **현재 데이터**: 1명 사용자, 5개 강의, 3개 CAPTCHA 오디오 파일, 1건 수강신청
 
-## 현재 구현 범위(요약)
+| 테이블 | 용도 | 레코드 수 |
+|---|---|---|
+| `users` | 사용자 정보 (UUID, username, email, password_hash) | 1 |
+| `courses` | 강의 정보 (id, title, capacity, enrolled_count) | 5 |
+| `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data) | 3 |
+| `carts` | 사용자별 장바구니 | 1 |
+| `cart_items` | 장바구니 아이템 | 0 |
+| `enrollments` | 수강신청 내역 | 1 |
 
-- 백엔드 API
-  - `GET /api/captcha/generate`: 오디오 CAPTCHA 발급 (오디오 경로/ID)
-  - `POST /api/captcha/verify`: CAPTCHA 검증
-  - `POST /api/users/register`: 회원가입(CAPTCHA 성공 필수, 인메모리 저장)
-  - `POST /api/users/login`: 로그인(.env 또는 환경변수의 `LOGIN_USERNAME`/`LOGIN_PASSWORD`와 비교)
-  - `GET /api/courses`: 강의 목록 조회
-  - `GET /api/cart`: 장바구니 조회
-  - `POST /api/cart`: 장바구니 추가
-  - `DELETE /api/cart/{courseId}`: 장바구니 제거
-  - `POST /api/enroll`: 본 신청(정원/중복 간단 처리)
-  - `GET /api/my-courses`: 신청 결과 조회
-- 프론트엔드
-  - 로그인 페이지 UI: 배경/로고, 아이디/비밀번호(초기 빈칸), 오디오 CAPTCHA(새로고침/검증), CAPTCHA 성공 시 로그인 버튼 활성화 → 성공 시 `/courses` 이동
-  - 수강신청 페이지 UI(`/courses`): 카드형 강의 목록, 장바구니 패널, 본 신청 버튼(데모 API 연동), 담긴 과목은 버튼이 '담김'으로 비활성화 표시
-  - 전역 빠른 클릭 감지: 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달 표시(5.png 흐름)
-  - 개발 서버 프록시: `/api`, `/static` → `backend:8000`
+### 테이블별 역할 요약
+* captcha_files: CAPTCHA 오디오와 정답 저장. 컬럼: id(파일 ID), filename, answer, audio_data(bytea), content_type, created_at  
+* users: 사용자 계정. 컬럼: id(UUID), username, email, password_hash, created_at  
+* courses: 강의 마스터. 컬럼: id, title, capacity, enrolled_count, updated_at  
+* carts: 사용자별 장바구니 컨테이너. 컬럼: id(UUID), user_id(UUID), created_at  
+* cart_items: 장바구니 항목. 복합 PK(cart_id, course_id), added_at  
+* enrollments: 수강신청 결과. 복합 PK(user_id, course_id), status(ENROLLED 등), created_at  
 
-## 시작하기
+### **Redis 7** (캐시/임시 데이터)
+- **키 패턴**:
+  - `captcha:{uuid}`: CAPTCHA 정답 (TTL 5분)
+  - `rl:{user_id}`: 속도제한 카운터 (TTL 3초)  
+  - `unlock:{user_id}`: CAPTCHA 통과 임시 토큰 (TTL 30초)
+
+## 로컬 실행 방법
 
 ### 요구사항
-
 - Docker Desktop (Docker, Docker Compose 포함)
 
-### 실행 방법 (Docker Compose 권장)
-
-1) 컨테이너 빌드 및 기동
+### 실행 방법
 ```bash
+# 1. 컨테이너 빌드 및 기동
 docker compose up --build
-```
 
-2) 접속 주소
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-- Backend Docs: `http://localhost:8000/docs`
+# 2. 접속 주소
+# - 프론트엔드: http://localhost:3000
+# - 백엔드 API: http://localhost:8000
+# - API 문서: http://localhost:8000/docs
+# - 헬스체크: http://localhost:8000/readyz
 
-3) 종료
-```bash
+# 3. 종료
 docker compose down
 ```
 
-4) 로그 확인(문제 발생 시)
+**한 줄 명령어로 PostgreSQL + Redis 포함 전체 스택 실행**
+
+### 로그 확인 (문제 발생 시)
 ```bash
-docker compose logs backend -n 200 | cat
-docker compose logs frontend -n 200 | cat
+docker compose logs backend -n 50
+docker compose logs frontend -n 50
 ```
 
-5) 환경변수(선택)
-- 백엔드 로그인 비교용 환경변수는 `LOGIN_USERNAME`, `LOGIN_PASSWORD` 입니다.
+## 🔍 데이터베이스 확인 방법
 
+### PostgreSQL 조회
 ```bash
-LOGIN_USERNAME=demo_user
-LOGIN_PASSWORD=demo_password
+# 테이블 목록
+docker exec aurora_postgres psql -U appuser -d aurora -c "\dt"
+
+# 레코드 수 확인
+docker exec aurora_postgres psql -U appuser -d aurora -c "
+SELECT 'users' as table_name, count(*) FROM users UNION ALL
+SELECT 'courses', count(*) FROM courses UNION ALL  
+SELECT 'captcha_files', count(*) FROM captcha_files;
+"
+
+# 강의 목록
+docker exec aurora_postgres psql -U appuser -d aurora -c "SELECT * FROM courses;"
+
+# CAPTCHA 파일 (DB 저장)
+docker exec aurora_postgres psql -U appuser -d aurora -c "
+SELECT id, filename, answer, length(audio_data) as file_size_bytes 
+FROM captcha_files;
+"
 ```
 
-### 로컬 개발 실행 (옵션)
-
-도커 없이 각각 실행해 개발할 때 사용합니다.
-
-- 백엔드(FastAPI)
+### Redis 조회
 ```bash
-# uv 사용 권장 (미설치 시 https://docs.astral.sh/uv/ 참고)
+# 키 목록  
+docker exec aurora_redis redis-cli --scan
+
+# 특정 키 조회
+docker exec aurora_redis redis-cli GET "captcha:some-uuid"
+```
+
+### DB 버전/선택 확인
+```bash
+# 현재 실행 중 서비스(선택된 DB 종류 확인)
+docker compose ps
+
+# PostgreSQL 버전 확인
+docker exec aurora_postgres psql -U appuser -d aurora -c "SELECT version();"
+
+# Redis 버전 확인
+docker exec aurora_redis redis-cli INFO server | grep redis_version
+```
+
+## 프로젝트 구조
+
+```
+AuroraPass/
+├── docker-compose.yml          # 개발용 (PostgreSQL + Redis 포함)
+├── docker-compose.prod.yml     # 운영용 스켈레톤 (외부 DB)
+├── backend/
+│   ├── main.py                 # FastAPI 앱 + 헬스체크
+│   ├── db/
+│   │   ├── models.py           # SQLAlchemy ORM 모델
+│   │   ├── session.py          # DB 세션 팩토리
+│   │   ├── redis_client.py     # Redis 클라이언트
+│   │   └── init/               # DB 초기화 스크립트
+│   ├── repositories/           # 리포지토리 패턴
+│   ├── services/               # 비즈니스 로직
+│   ├── api/                    # FastAPI 라우터
+│   └── scripts/                # DB 유틸리티
+├── frontend/                   # Vite + React + TypeScript
+└── docs/                       # API 명세서
+```
+
+## API 테스트
+
+```bash
+# 헬스체크 (DB + Redis 상태)
+curl http://localhost:8000/readyz
+
+# 강의 목록
+curl http://localhost:8000/api/courses
+
+# CAPTCHA 생성 (DB 기반)
+curl http://localhost:8000/api/captcha/generate
+
+# 오디오 파일 다운로드 (DB에서 제공)
+curl http://localhost:8000/api/captcha/audio/sample1 --output test.wav
+
+# 장바구니 추가
+curl -X POST http://localhost:8000/api/cart \
+  -H "Content-Type: application/json" \
+  -d '{"courseId": "CS101"}'
+
+# 수강신청
+curl -X POST http://localhost:8000/api/enroll
+```
+
+## AWS 배포 고려사항
+
+### 개발용 vs 운영용 차이
+
+| 구분 | 개발용 (docker-compose.yml) | 운영용 (docker-compose.prod.yml) |
+|---|---|---|
+| **DB 위치** | 컨테이너 내부 (postgres:15) | 외부 관리형 (RDS PostgreSQL) |
+| **이미지 소스** | 로컬 빌드 (`build: .`) | ECR 레지스트리 (`image: <ECR>/app:tag`) |
+| **코드 변경** | 볼륨 마운트로 즉시 반영 | 이미지 재배포 필요 |
+| **보안** | 개발 편의성 우선 | 읽기전용, 리소스 제한 |
+| **확장성** | 단일 컨테이너 | 로드밸런서 + 다중 인스턴스 |
+| **비밀관리** | `.env` 파일 | AWS Secrets Manager |
+
+### AWS 아키텍처
+```
+Internet → ALB → ECS Fargate Tasks → RDS PostgreSQL
+                                   → ElastiCache Redis
+```
+
+### 배포 시 `docker-compose.prod.yml` 필요 이유
+1. **외부 DB 연결**: RDS/ElastiCache 환경변수 사용
+2. **보안 강화**: 읽기전용 파일시스템, 리소스 제한
+3. **이미지 기반**: ECR 레지스트리에서 배포 이미지 pull
+4. **ECS 태스크 정의**: Docker Compose를 ECS 태스크로 변환 시 참고
+
+## AWS 배포 방법
+
+AWS 콘솔/CLI를 이용해 ECS Fargate + ALB + RDS + ElastiCache로 배포하는 방법입니다.
+
+### 0) 준비물
+- AWS 계정, 권한(IAM AdministratorAccess 또는 동등 권한)
+- 로컬: Docker, AWS CLI v2, Git, GitHub 계정(선택: CI/CD)
+- 리전: ap-northeast-2(서울) 가정
+
+### 1) ECR 리포지토리 생성
+```bash
+AWS_REGION=ap-northeast-2
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+ECR=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
+aws ecr create-repository --repository-name aurora-backend --region $AWS_REGION || true
+aws ecr create-repository --repository-name aurora-frontend --region $AWS_REGION || true
+
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR
+```
+
+### 2) 이미지 빌드/푸시
+```bash
+TAG=$(git rev-parse --short HEAD || date +%s)
+
+# Backend
+docker buildx build \
+  -t $ECR/aurora-backend:$TAG \
+  -f backend/Dockerfile \
+ s --platform linux/amd64 \
+  --push .
+
+# Frontend
+docker buildx build \
+  -t $ECR/aurora-frontend:$TAG \
+  -f frontend/Dockerfile \
+  --platform linux/amd64 \
+  --push frontend
+```
+
+### 3) RDS(PostgreSQL) / ElastiCache(Redis) 준비
+- RDS 콘솔에서 PostgreSQL 인스턴스 생성 (예: db.t3.micro, 멀티AZ 비활성으로 시작)
+- 보안 그룹에서 ECS 태스크 보안그룹에서 5432 접근 허용
+- 엔드포인트, DB명/유저/비밀번호로 `DATABASE_URL` 구성:
+```text
+postgresql+psycopg2://<user>:<password>@<rds-endpoint>:5432/<dbname>
+```
+- ElastiCache Redis 클러스터 생성 (단일 샤드 시작)
+- 보안 그룹에서 ECS 태스크 보안그룹에서 6379 접근 허용
+- 엔드포인트로 `REDIS_URL` 구성:
+```text
+redis://<redis-endpoint>:6379/0
+```
+
+### 4) 시크릿 저장 (Secrets Manager 권장)
+```bash
+aws secretsmanager create-secret \
+  --name AuroraPass/DATABASE_URL \
+  --secret-string "postgresql+psycopg2://<user>:<password>@<rds-endpoint>:5432/<dbname>" \
+  --region $AWS_REGION || true
+
+aws secretsmanager create-secret \
+  --name AuroraPass/REDIS_URL \
+  --secret-string "redis://<redis-endpoint>:6379/0" \
+  --region $AWS_REGION || true
+```
+
+### 5) ECS Fargate 클러스터/태스크/서비스 생성
+1. ECS 콘솔에서 클러스터 생성(EC2가 아닌 Fargate)
+2. 태스크 정의 생성(가족 이름: aurora-backend, aurora-frontend)
+   - 런타임: Fargate, 네트워킹 모드: awsvpc, 플랫폼 1.4+
+   - 컨테이너:
+     - Backend: 이미지 `$ECR/aurora-backend:$TAG`, 포트 8000, 헬스체크 `GET /healthz`
+       - 환경변수/시크릿: `DATABASE_URL`(Secrets Manager), `REDIS_URL`(Secrets Manager), `PORT=8000`
+       - 로그: awslogs (그룹: /ecs/aurora-backend)
+     - Frontend: 이미지 `$ECR/aurora-frontend:$TAG`, 포트 3000, 로그 awslogs
+3. 서비스 생성(각 태스크 정의로 1개씩)
+   - 서브넷: 프라이빗(태스크), 퍼블릭(ALB)
+   - 보안 그룹: ALB ↔ ECS, ECS → RDS/Redis 허용
+   - 오토스케일은 1개로 시작
+
+### 6) ALB 구성 (경로 기반 라우팅)
+1. ALB 생성(퍼블릭 서브넷, 보안그룹 80/443 허용)
+2. Target Group 2개:
+   - tg-backend: HTTP:8000, 헬스체크 `/healthz`
+   - tg-frontend: HTTP:3000, 헬스체크 `/`
+3. 리스너 규칙(HTTP 80 → 이후 443 권장):
+   - `/api/*`, `/static/*` → tg-backend
+   - `/*` → tg-frontend
+4. 각 ECS 서비스에 해당 Target Group 연결
+
+### 7) 보안 그룹 요약
+- ALB SG: Inbound 80/443 from 0.0.0.0/0 → Outbound to ECS SG
+- ECS SG: Inbound from ALB SG(3000/8000) → Outbound to RDS/Redis SG(5432/6379)
+- RDS SG: Inbound 5432 from ECS SG
+- Redis SG: Inbound 6379 from ECS SG
+
+### 8) 배포 확인
+```bash
+# ALB DNS 이름 확인 후 접속
+curl http://<alb-dns>/readyz        # 백엔드 상태
+curl http://<alb-dns>/              # 프론트엔드
+```
+
+### 9) 배포 확인 및 모니터링
+- CloudWatch Logs에서 애플리케이션 로그 확인
+- ECS 서비스 상태 및 태스크 모니터링  
+- ALB Target Group 헬스체크 상태 점검
+
+### 배포 스크립트 사용(요약)
+배포는 환경변수를 채우고 로컬 스크립트를 실행하면 ECR까지 자동으로 진행됩니다. ECS 서비스 업데이트는 마지막에 한 번 콘솔에서 수행합니다.
+
+1) 환경변수 파일 생성/수정
+```bash
+cp deploy.env.example deploy.env
+# deploy.env를 열어 아래 값을 채웁니다
+# AWS_REGION, ACCOUNT_ID, IMAGE_TAG, DATABASE_URL, REDIS_URL 등
+```
+
+2) 스크립트 실행(이미지 빌드/푸시 자동)
+```bash
+./scripts/deploy.sh
+```
+
+3) ECS 서비스 업데이트(콘솔)
+- 백엔드/프론트엔드 태스크 정의에서 컨테이너 이미지 경로를 다음으로 업데이트
+  - Backend: ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aurora-backend:${IMAGE_TAG}
+  - Frontend: ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aurora-frontend:${IMAGE_TAG}
+- 해당 태스크 정의로 서비스를 배포(Force new deployment)
+- ALB Target Group 헬스체크 및 CloudWatch Logs로 정상 동작 확인
+
+참고: `scripts/deploy.sh`는 ECR 로그인/이미지 빌드 및 푸시까지 수행하며, ECS 서비스 업데이트는 안전을 위해 자동화하지 않았습니다.
+
+##  주요 기능
+
+### 비정상 접근(CAPTCHA) 트리거
+- **프론트엔드**: 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달
+- **백엔드**: 동일 사용자 3초 내 5회 이상 API 요청 시 CAPTCHA 요구
+- **적용 경로**: `/api/courses`, `/api/cart`, `/api/enroll`, `/api/my-courses`
+
+## 로컬 개발 (옵션)
+
+Docker 없이 각각 실행할 때:
+
+```bash
+# 백엔드 (FastAPI)
 cd backend
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
 
-- 프론트엔드(Vite + React + TypeScript)
-```bash
+# 프론트엔드 (Vite + React + TypeScript)  
 cd frontend
 bun install
 bun run dev -- --host --port 3000
 ```
 
-프론트 개발 서버는 프록시로 `/api`, `/static`을 `http://localhost:8000`으로 전달합니다.
+## 구현 상세
 
-## 개발 메모
+### 로그인 플로우
+1. 아이디/비밀번호 입력
+2. 오디오 CAPTCHA 성공  
+3. 로그인 API(`/api/users/login`) 성공 시 `/courses` 이동
 
-- 프론트엔드 개발 서버는 Bun 기반(`oven/bun`)으로 동작합니다.
-- 정적 오디오 파일은 백엔드에서 `/static/audio/*.wav` 경로로 서빙됩니다.
-- 추후 구현 예정: 로그인/세션, 강의/장바구니/수강신청 API, 비정상 접근 탐지/재CAPTCHA, DB 영속화.
+### 수강신청 플로우  
+1. 강의 목록 → 장바구니 담기/제거
+2. 본 신청(`/api/enroll`) → 결과 메시지 표시
+3. 정원/상태 갱신 (PostgreSQL 트랜잭션)
 
-### 비정상 접근(CAPTCHA) 트리거
-- 프론트(UI): 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달을 표시합니다.
-- 백엔드(API): 동일 사용자 기준 3초 내 5회 이상 요청 시 서버가 CAPTCHA를 요구합니다.
-- 적용 경로: `/api/courses`, `/api/cart`(GET/POST/DELETE), `/api/enroll`, `/api/my-courses`
-- 응답 예(요구 시):
-```json
-{
-  "requireCaptcha": true,
-  "captcha": { "captchaId": "...", "audioPath": "/static/audio/sample1.wav" }
-}
-```
-프론트에서 모달로 오디오 재생/정답 제출 후 `/api/enroll/unlock`을 통해 1회 신청이 허용됩니다.
+### CAPTCHA 시스템
+- **생성**: DB에서 랜덤 선택 → Redis에 정답 저장 (TTL 5분)
+- **제공**: `/api/captcha/audio/{id}`로 PostgreSQL에서 바이너리 스트리밍  
+- **검증**: Redis 정답 확인 → 성공 시 30초간 임시 토큰 발급
 
-## 구현 상세(확인용 체크리스트)
-- 로그인 플로우: 아이디/비밀번호 입력 → 오디오 CAPTCHA 성공 → 로그인 API(`/api/users/login`) 성공 시 `/courses` 이동
-- 수강신청 플로우: 강의 목록 → 장바구니 담기/제거 → 본 신청(`/api/enroll`) → 결과 메시지 표시 및 정원/상태 갱신
-- 장바구니 버튼 상태: 이미 담긴 과목 또는 정원 초과 과목은 비활성화
-- 데모 데이터/정답 파일: 변경 즉시 반영, 백엔드 재시작으로 인메모리 상태 초기화
+## 📈 향후 개선 방향
 
-### CAPTCHA 정답 데이터
-- 정답은 JSON 파일로 관리됩니다: `backend/static/audio/captcha_answers.json`
+1. **인증/권한**: JWT 기반 실제 로그인 시스템
+2. **마이그레이션**: Alembic 도입으로 스키마 버저닝
+3. **모니터링**: Prometheus + Grafana 메트릭 수집
+4. **로그 집계**: ELK 스택 또는 Loki 중앙화
+5. **성능 최적화**: 커넥션 풀링, 쿼리 최적화
+6. **보안 강화**: HTTPS, 입력 검증, SQL 인젝션 방어
 
-### 강의 데모 데이터
-- 강의 목록 데모 데이터는 JSON 파일로 관리됩니다: `backend/static/demo/courses.json`
-- 값을 수정하면 API와 UI에 반영됩니다.
+---
 
-## API 명세 문서
-
-- `docs/01_user_api.md`: 사용자 관련 API
-- `docs/02_courses_api.md`: 강의 관련 API
-- `docs/03_registration_api.md`: 수강신청 관련 API
-- `docs/04_captcha_api.md`: CAPTCHA API 상세
+**관련 문서**: `docs/` 폴더에서 상세 API 명세 확인

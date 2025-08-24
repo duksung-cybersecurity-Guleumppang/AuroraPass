@@ -4,3 +4,7 @@ python-multipart
 jinja2
 email-validator
 python-dotenv
+sqlalchemy
+psycopg2-binary
+redis
+structlog
