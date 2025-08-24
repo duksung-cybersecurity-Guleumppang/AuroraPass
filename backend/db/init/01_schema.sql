@@ -46,3 +46,13 @@ CREATE TABLE IF NOT EXISTS enrollments (
 CREATE INDEX IF NOT EXISTS ix_enrollments_course ON enrollments(course_id);
 
 
+-- captcha_files
+CREATE TABLE IF NOT EXISTS captcha_files (
+  id varchar(40) PRIMARY KEY,
+  filename varchar(255) UNIQUE NOT NULL,
+  answer varchar(100) NOT NULL,
+  audio_data bytea NOT NULL,
+  content_type varchar(50) NOT NULL DEFAULT 'audio/wav',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+

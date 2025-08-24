@@ -73,3 +73,18 @@ async def login_user(request: UserLoginRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="서버 내부 오류가 발생했습니다.",
         )
+
+
+@router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="로그인 상태 확인",
+    description="현재 로그인 상태를 확인합니다. 간단한 구현으로 항상 성공을 반환합니다.",
+)
+async def get_current_user():
+    """
+    현재 로그인 상태를 확인합니다.
+    실제 구현에서는 세션이나 JWT 토큰을 검증해야 하지만,
+    여기서는 간단히 항상 인증된 것으로 처리합니다.
+    """
+    return {"authenticated": True, "username": "demo_user"}

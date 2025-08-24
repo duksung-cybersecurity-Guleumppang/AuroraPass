@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from uuid import UUID
 from db.models import Course, Cart, CartItem, Enrollment, User
 from db.session import get_db_session
 
@@ -91,6 +92,10 @@ class CourseRepository:
         """Enroll user in all cart courses"""
         results = []
         
+        # Convert user_id to UUID if it's a string
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        
         with get_db_session() as session:
             cart = session.query(Cart).filter(Cart.user_id == user_id).first()
             if not cart:
@@ -151,6 +156,10 @@ class CourseRepository:
     
     def get_user_enrollments(self, user_id: str) -> List[Dict[str, Any]]:
         """Get user's enrolled courses as dicts"""
+        # Convert user_id to UUID if it's a string
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+            
         with get_db_session() as session:
             courses = session.query(Course).join(Enrollment).filter(
                 Enrollment.user_id == user_id

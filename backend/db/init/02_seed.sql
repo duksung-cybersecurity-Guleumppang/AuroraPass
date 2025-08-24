@@ -1,3 +1,8 @@
+-- Demo user (for API testing)
+INSERT INTO users (id, username, email, password_hash) VALUES
+('12345678-1234-1234-1234-123456789012', 'demo_user', 'demo@example.com', 'demo_hash')
+ON CONFLICT (id) DO NOTHING;
+
 -- Demo courses matching the JSON data
 INSERT INTO courses (id, title, capacity, enrolled_count)
 VALUES

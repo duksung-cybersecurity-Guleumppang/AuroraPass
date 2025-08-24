@@ -44,7 +44,10 @@ async def verify_captcha(request: CaptchaVerifyRequest):
     """
     try:
         is_valid = captcha_service.verify_captcha(request.captcha_id, request.user_input)
-        return CaptchaVerifyResponse(success=is_valid)
+        if is_valid:
+            return CaptchaVerifyResponse(success=True, message="CAPTCHA 인증에 성공했습니다.")
+        else:
+            return CaptchaVerifyResponse(success=False, message="CAPTCHA 인증에 실패했습니다.")
     except Exception as e:
         print(f"Error verifying CAPTCHA: {e}")
         raise HTTPException(status_code=500, detail="CAPTCHA 검증에 실패했습니다.")

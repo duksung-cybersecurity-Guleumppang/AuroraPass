@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import bgImage from '../../images/Home_screen_background.jpg';
 import logoImage from '../../images/logo.jpg';
 
@@ -7,9 +8,17 @@ type Captcha = { captchaId: string; audioPath: string };
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, login } = useAuth();
   // 초기값은 비워둡니다. (.env 값은 placeholder로만 사용)
   const placeholderUsername = useMemo(() => '', []);
   const placeholderPassword = useMemo(() => '', []);
+
+  // 이미 로그인된 사용자는 courses 페이지로 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/courses', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -46,15 +55,11 @@ export default function LoginPage() {
     setLoggingIn(true);
     setLoginMsg('');
     try {
-      const res = await fetch('/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
-      setLoginMsg(data?.message ?? '');
-      if (data?.success) {
+      const success = await login(username, password);
+      if (success) {
         navigate('/courses');
+      } else {
+        setLoginMsg('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
       }
     } catch (e) {
       setLoginMsg('로그인 요청 중 오류가 발생했습니다.');

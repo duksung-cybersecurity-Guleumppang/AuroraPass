@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 type Course = {
   courseId: string;
@@ -10,6 +12,8 @@ type Course = {
 };
 
 export default function CoursesPage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [cart, setCart] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
@@ -19,6 +23,11 @@ export default function CoursesPage() {
   const [captchaMsg, setCaptchaMsg] = useState('');
   const [uiCaptchaRequired, setUiCaptchaRequired] = useState(false);
   const clickTimesRef = useRef<number[]>([]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const openCaptchaIfNeeded = (data: any): boolean => {
     if (uiCaptchaRequired) {
@@ -45,7 +54,7 @@ export default function CoursesPage() {
   const fetchCourses = async () => {
     const res = await fetch('/api/courses');
     let data: any = [];
-    try { data = await res.json(); } catch {}
+    try { data = await res.json(); } catch { }
     if (openCaptchaIfNeeded(data)) return;
     setCourses(Array.isArray(data) ? data : []);
   };
@@ -53,7 +62,7 @@ export default function CoursesPage() {
   const fetchCart = async () => {
     const res = await fetch('/api/cart');
     let data: any = [];
-    try { data = await res.json(); } catch {}
+    try { data = await res.json(); } catch { }
     if (openCaptchaIfNeeded(data)) return;
     setCart(Array.isArray(data) ? data : []);
   };
@@ -65,7 +74,7 @@ export default function CoursesPage() {
       body: JSON.stringify({ courseId })
     });
     let data: any = {};
-    try { data = await res.json(); } catch {}
+    try { data = await res.json(); } catch { }
     if (openCaptchaIfNeeded(data)) return;
     fetchCart();
   };
@@ -73,7 +82,7 @@ export default function CoursesPage() {
   const removeFromCart = async (courseId: string) => {
     const res = await fetch(`/api/cart/${courseId}`, { method: 'DELETE' });
     let data: any = {};
-    try { data = await res.json(); } catch {}
+    try { data = await res.json(); } catch { }
     if (openCaptchaIfNeeded(data)) return;
     fetchCart();
   };
@@ -84,7 +93,7 @@ export default function CoursesPage() {
     try {
       const res = await fetch('/api/enroll', { method: 'POST' });
       let data: any = null;
-      try { data = await res.json(); } catch {}
+      try { data = await res.json(); } catch { }
       if (openCaptchaIfNeeded(data)) return;
       const okCount = (data?.results || []).filter((r: any) => r.success).length;
       const failCount = (data?.results || []).length - okCount;
@@ -168,6 +177,16 @@ export default function CoursesPage() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <span style={{ color: colors.subText, fontSize: 14 }}>장바구니 {cart.length}개</span>
+          <button
+            onClick={handleLogout}
+            style={{
+              ...buttonBase,
+              background: colors.danger,
+              color: '#fff'
+            }}
+          >
+            로그아웃
+          </button>
           <button
             onClick={enroll}
             disabled={loading || cart.length === 0}

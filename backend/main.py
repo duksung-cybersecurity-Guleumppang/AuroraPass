@@ -3,6 +3,8 @@ from fastapi.staticfiles import StaticFiles
 from api import captcha_api, user_api, courses_api
 import os
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import ProgrammingError
+from pathlib import Path
 from db.redis_client import ping_redis
 from utils.logging import configure_logging, get_logger
 
@@ -70,3 +72,77 @@ async def readyz():
         "redis": redis_ok,
         "ok": overall_ok
     }
+
+
+@app.on_event("startup")
+def ensure_captcha_table_and_seed():
+    """
+    컨테이너가 초기화된 상태(볼륨 비어있음)에서 시작할 때
+    - captcha_files 테이블이 없으면 생성
+    - 비어 있으면 static/audio 의 파일과 정답을 DB에 로드
+    """
+    if engine is None:
+        return
+    try:
+        with engine.begin() as conn:
+            # 테이블 존재 여부 확인 후 생성
+            conn.execute(text(
+                """
+                CREATE TABLE IF NOT EXISTS captcha_files (
+                  id varchar(40) PRIMARY KEY,
+                  filename varchar(255) UNIQUE NOT NULL,
+                  answer varchar(100) NOT NULL,
+                  audio_data bytea NOT NULL,
+                  content_type varchar(50) NOT NULL DEFAULT 'audio/wav',
+                  created_at timestamptz NOT NULL DEFAULT now()
+                )
+                """
+            ))
+
+            # 데이터 존재 여부 확인
+            count = conn.execute(text("SELECT COUNT(*) FROM captcha_files")).scalar()
+            if count and count > 0:
+                return
+
+            # 파일 시스템에서 로드
+            audio_dir = Path(__file__).parent / "static" / "audio"
+            answers_path = audio_dir / "captcha_answers.json"
+            import json
+            if answers_path.exists():
+                answers = json.loads(answers_path.read_text(encoding="utf-8"))
+                for filename, answer in answers.items():
+                    file_path = audio_dir / filename
+                    if not file_path.exists():
+                        continue
+                    audio_data = file_path.read_bytes()
+                    conn.execute(text(
+                        """
+                        INSERT INTO captcha_files (id, filename, answer, audio_data, content_type)
+                        VALUES (:id, :filename, :answer, :audio_data, 'audio/wav')
+                        ON CONFLICT (filename) DO NOTHING
+                        """
+                    ), {
+                        "id": filename.replace(".wav", ""),
+                        "filename": filename,
+                        "answer": answer,
+                        "audio_data": audio_data,
+                    })
+            logger.info("captcha_files ensured and seeded if empty")
+            
+            # 데모 사용자 생성 (없을 경우)
+            demo_user_id = "12345678-1234-1234-1234-123456789012"
+            user_count = conn.execute(text("SELECT COUNT(*) FROM users WHERE id = :id"), {"id": demo_user_id}).scalar()
+            if not user_count:
+                conn.execute(text("""
+                    INSERT INTO users (id, username, email, password_hash)
+                    VALUES (:id, :username, :email, :password_hash)
+                    ON CONFLICT (id) DO NOTHING
+                """), {
+                    "id": demo_user_id,
+                    "username": "demo_user",
+                    "email": "demo@example.com",
+                    "password_hash": "demo_hash"
+                })
+                logger.info("Demo user created")
+    except Exception as e:
+        logger.error("Failed to ensure/seed captcha_files and demo user", error=str(e))
