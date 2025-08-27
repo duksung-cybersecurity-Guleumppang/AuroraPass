@@ -51,6 +51,124 @@ docker compose up --build
 docker compose down
 ```
 
+## 단일 서버(EC2 등)에서 전체 스택 배포
+
+아래 절차로 한 대 서버에 PostgreSQL/Redis/Backend/Frontend를 모두 Docker Compose로 기동할 수 있습니다.
+
+1) 서버 준비
+- Ubuntu 22.04 기준 Docker 설치 후 3000(프론트), 8000(백엔드) 포트를 보안그룹에서 허용합니다.
+
+2) 환경 파일 생성(.env)
+```bash
+cp example.env .env
+```
+`.env`를 열어 값을 설정합니다.
+
+
+3) 전체 스택 기동
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+4) 확인
+```bash
+# 백엔드 상태
+curl http://<SERVER_IP>:PORT/healthz
+
+# 프론트 접속(브라우저)
+http://<SERVER_IP>:PORT/
+```
+
+5) 운영 팁
+- 코드 갱신: `git pull && docker compose up -d --build`
+- 로그 확인: `docker compose logs backend -n 50` (frontend/postgres/redis 동일)
+- 완전 정리(주의: 데이터 삭제): `docker compose down -v`
+
+
+## AWS 설정 (도메인 연결 및 HTTPS 설정)
+
+`https://rainbowwings.co.kr`처럼 포트 없이 접속하려면, EC2 보안그룹, DNS, Nginx 리버스 프록시, TLS 인증서 설정이 필요합니다. 아래 순서대로 진행하세요.
+
+1) 보안그룹 열기(EC2)
+- 인바운드 규칙에 80(HTTP), 443(HTTPS)을 추가합니다.
+- 3000/8000 포트는 외부에 열지 않는 것을 권장합니다(내부용). 이미 열었다면 제거 또는 소스 제한을 고려하세요.
+
+2) DNS 설정
+- 도메인 관리 콘솔에서 A 레코드를 생성해 `도메인 → EC2 퍼블릭 IP`로 지정합니다.
+- 예: `rainbowwings.co.kr → 11.22.33.44`
+
+3) 애플리케이션 컨테이너 실행
+- `.env`에서 포트를 설정하고 전체 스택을 기동합니다.
+```bash
+docker compose up -d --build
+```
+- 기본값 예시: `FRONT_PORT=3000`, `BACKEND_PORT=8000`
+
+4) Nginx 설치(리버스 프록시)
+```bash
+sudo apt update -y && sudo apt install -y nginx
+```
+
+5) Nginx 서버 블록 생성
+아래는 예시입니다.
+
+```bash
+sudo tee /etc/nginx/sites-available/rainbowwings.conf >/dev/null <<'NGINX'
+server {
+  listen 80;
+  server_name rainbowwings.co.kr;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+  server_name rainbowwings.co.kr;
+
+  # certbot 발급 후 아래 경로가 채워집니다
+  ssl_certificate /etc/letsencrypt/live/rainbowwings.co.kr/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/rainbowwings.co.kr/privkey.pem;
+
+  location /api/ {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  location /static/ {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+  }
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+  }
+}
+NGINX
+sudo ln -s /etc/nginx/sites-available/rainbowwings.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+6) HTTPS 인증서 발급(무료, Certbot)
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d rainbowwings.co.kr --email <your-email>@example.com --agree-tos --redirect
+```
+- 성공하면 Nginx 설정에 SSL 경로가 자동 반영되고, 80→443 리다이렉트가 켜집니다.
+
+7) 확인
+```bash
+curl -I https://rainbowwings.co.kr/healthz     # 200 또는 301/302 후 200
+open https://rainbowwings.co.kr                 # 브라우저 접속
+```
+
+문제 해결 팁
+- DNS 전파(수분~최대 수십분) 대기 후 테스트하세요.
+- Nginx 502/504: 컨테이너가 올라왔는지(`docker compose ps`)와 `.env`의 포트를 확인하세요.
+- 인증서 오류: `certbot renew --dry-run`으로 갱신 테스트, 방화벽/보안그룹 80/443 열림 확인.
+
+
 **한 줄 명령어로 PostgreSQL + Redis 포함 전체 스택 실행**
 
 ### 로그 확인 (문제 발생 시)
@@ -109,7 +227,6 @@ docker exec aurora_redis redis-cli INFO server | grep redis_version
 ```
 AuroraPass/
 ├── docker-compose.yml          # 개발용 (PostgreSQL + Redis 포함)
-├── docker-compose.prod.yml     # 운영용 스켈레톤 (외부 DB)
 ├── backend/
 │   ├── main.py                 # FastAPI 앱 + 헬스체크
 │   ├── db/
@@ -147,246 +264,6 @@ curl -X POST http://localhost:8000/api/cart \
 
 # 수강신청
 curl -X POST http://localhost:8000/api/enroll
-```
-
-## AWS 배포 고려사항
-
-### 개발용 vs 운영용 차이
-
-| 구분 | 개발용 (docker-compose.yml) | 운영용 (docker-compose.prod.yml) |
-|---|---|---|
-| **DB 위치** | 컨테이너 내부 (postgres:15) | 외부 관리형 (RDS PostgreSQL) |
-| **이미지 소스** | 로컬 빌드 (`build: .`) | ECR 레지스트리 (`image: <ECR>/app:tag`) |
-| **코드 변경** | 볼륨 마운트로 즉시 반영 | 이미지 재배포 필요 |
-| **보안** | 개발 편의성 우선 | 읽기전용, 리소스 제한 |
-| **확장성** | 단일 컨테이너 | 로드밸런서 + 다중 인스턴스 |
-| **비밀관리** | `.env` 파일 | AWS Secrets Manager |
-
-### AWS 아키텍처
-```
-Internet → ALB → ECS Fargate Tasks → RDS PostgreSQL
-                                   → ElastiCache Redis
-```
-
-### 배포 시 `docker-compose.prod.yml` 필요 이유
-1. **외부 DB 연결**: RDS/ElastiCache 환경변수 사용
-2. **보안 강화**: 읽기전용 파일시스템, 리소스 제한
-3. **이미지 기반**: ECR 레지스트리에서 배포 이미지 pull
-4. **ECS 태스크 정의**: Docker Compose를 ECS 태스크로 변환 시 참고
-
-### AWS 배포 빠른 시작 (TL;DR)
-```bash
-# 0) 변수 채우기
-cp deploy.env.example deploy.env
-# deploy.env 열어 AWS_REGION, ACCOUNT_ID, IMAGE_TAG, DATABASE_URL, REDIS_URL 채우기
-
-# 1) ECR 로그인 + 이미지 빌드/푸시 자동화
-./scripts/deploy.sh
-
-# 2) ECS(콘솔)에서 서비스의 태스크 정의 이미지 태그를 IMAGE_TAG로 갱신
-#    → 백엔드/프론트엔드 모두 Force new deployment
-
-# 3) ALB DNS로 접속해 확인
-curl http://<alb-dns>/readyz   # 백엔드 상태
-open http://<alb-dns>/         # 프론트엔드 화면
-```
-
-## AWS 배포 방법
-
-AWS 콘솔/CLI를 이용해 ECS Fargate + ALB + RDS + ElastiCache로 배포하는 방법입니다.
-
-### 0) 준비물
-- AWS 계정, 권한(IAM AdministratorAccess 또는 동등 권한)
-- 로컬: Docker, AWS CLI v2, Git, GitHub 계정(선택: CI/CD)
-- 리전: ap-northeast-2(서울) 가정
-
-### 1) ECR 리포지토리 생성
-```bash
-AWS_REGION=ap-northeast-2
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-ECR=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-
-aws ecr create-repository --repository-name aurora-backend --region $AWS_REGION || true
-aws ecr create-repository --repository-name aurora-frontend --region $AWS_REGION || true
-
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR
-```
-
-### 2) 이미지 빌드/푸시
-```bash
-TAG=$(git rev-parse --short HEAD || date +%s)
-
-# Backend
-docker buildx build \
-  -t $ECR/aurora-backend:$TAG \
-  -f backend/Dockerfile \
-  --platform linux/amd64 \
-  --push .
-
-# Frontend
-docker buildx build \
-  -t $ECR/aurora-frontend:$TAG \
-  -f frontend/Dockerfile \
-  --platform linux/amd64 \
-  --push frontend
-```
-
-### 3) RDS(PostgreSQL) / ElastiCache(Redis) 준비
-- RDS 콘솔에서 PostgreSQL 인스턴스 생성 (예: db.t3.micro, 멀티AZ 비활성으로 시작)
-- 보안 그룹에서 ECS 태스크 보안그룹에서 5432 접근 허용
-- 엔드포인트, DB명/유저/비밀번호로 `DATABASE_URL` 구성:
-```text
-postgresql+psycopg2://<user>:<password>@<rds-endpoint>:5432/<dbname>
-```
-- ElastiCache Redis 클러스터 생성 (단일 샤드 시작)
-- 보안 그룹에서 ECS 태스크 보안그룹에서 6379 접근 허용
-- 엔드포인트로 `REDIS_URL` 구성:
-```text
-redis://<redis-endpoint>:6379/0
-```
-
-### 4) 시크릿 저장 (Secrets Manager 권장)
-```bash
-aws secretsmanager create-secret \
-  --name AuroraPass/DATABASE_URL \
-  --secret-string "postgresql+psycopg2://<user>:<password>@<rds-endpoint>:5432/<dbname>" \
-  --region $AWS_REGION || true
-
-aws secretsmanager create-secret \
-  --name AuroraPass/REDIS_URL \
-  --secret-string "redis://<redis-endpoint>:6379/0" \
-  --region $AWS_REGION || true
-```
-
-### 5) ECS Fargate 클러스터/태스크/서비스 생성
-1. ECS 콘솔에서 클러스터 생성(EC2가 아닌 Fargate)
-2. 태스크 정의 생성(가족 이름: aurora-backend, aurora-frontend)
-   - 런타임: Fargate, 네트워킹 모드: awsvpc, 플랫폼 1.4+
-   - 컨테이너:
-     - Backend: 이미지 `$ECR/aurora-backend:$TAG`, 포트 8000, 헬스체크 `GET /healthz`
-       - 환경변수/시크릿: `DATABASE_URL`(Secrets Manager), `REDIS_URL`(Secrets Manager), `PORT=8000`
-       - 로그: awslogs (그룹: /ecs/aurora-backend)
-     - Frontend: 이미지 `$ECR/aurora-frontend:$TAG`, 포트 3000, 로그 awslogs
-3. 서비스 생성(각 태스크 정의로 1개씩)
-   - 서브넷: 프라이빗(태스크), 퍼블릭(ALB)
-   - 보안 그룹: ALB ↔ ECS, ECS → RDS/Redis 허용
-   - 오토스케일은 1개로 시작
-
-### 5-1) docker-compose.prod.yml 변수 채우기 가이드
-`docker-compose.prod.yml`은 운영 템플릿입니다. 실제 ECS에 직접 적용하지 않아도, "무엇을 채워야 하는지"를 보여주는 기준으로 사용합니다.
-
-- `${ECR_REGISTRY}`: `<ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com`
-- `${IMAGE_TAG}`: 배포할 이미지 태그(예: 커밋 해시 또는 날짜)
-- `${AWS_REGION}`: 예) `ap-northeast-2`
-- `${DATABASE_URL}`: RDS 연결 문자열
-  - 예) `postgresql+psycopg2://<user>:<password>@<rds-endpoint>:5432/<dbname>`
-- `${REDIS_URL}`: ElastiCache Redis 연결 문자열
-  - 예) `redis://<redis-endpoint>:6379/0`
-
-예시(치환 후 개념적으로 이런 값이 들어갑니다):
-```yaml
-services:
-  backend:
-    image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/aurora-backend:20250101
-    environment:
-      - PORT=8000
-      - DATABASE_URL=postgresql+psycopg2://appuser:apppass@aurora.xxxxxx.ap-northeast-2.rds.amazonaws.com:5432/aurora
-      - REDIS_URL=redis://aurora-redis.xxxxxx.apn2.cache.amazonaws.com:6379/0
-      - AWS_DEFAULT_REGION=ap-northeast-2
-```
-
-### 6) ALB 구성 (경로 기반 라우팅)
-1. ALB 생성(퍼블릭 서브넷, 보안그룹 80/443 허용)
-2. Target Group 2개:
-   - tg-backend: HTTP:8000, 헬스체크 `/healthz`
-   - tg-frontend: HTTP:3000, 헬스체크 `/`
-3. 리스너 규칙(HTTP 80 → 이후 443 권장):
-   - `/api/*`, `/static/*` → tg-backend
-   - `/*` → tg-frontend
-4. 각 ECS 서비스에 해당 Target Group 연결
-
-### 7) 보안 그룹 요약
-- ALB SG: Inbound 80/443 from 0.0.0.0/0 → Outbound to ECS SG
-- ECS SG: Inbound from ALB SG(3000/8000) → Outbound to RDS/Redis SG(5432/6379)
-- RDS SG: Inbound 5432 from ECS SG
-- Redis SG: Inbound 6379 from ECS SG
-
-### 8) 배포 확인
-```bash
-# ALB DNS 이름 확인 후 접속
-curl http://<alb-dns>/readyz        # 백엔드 상태
-curl http://<alb-dns>/              # 프론트엔드
-```
-
-### 9) 배포 확인 및 모니터링
-- CloudWatch Logs에서 애플리케이션 로그 확인
-- ECS 서비스 상태 및 태스크 모니터링  
-- ALB Target Group 헬스체크 상태 점검
-
-### 10) 리전 변경 팁
-- `deploy.env`와 `docker-compose.prod.yml`에서 `${AWS_REGION}`만 변경하면 됩니다.
-- ECR 레지스트리 도메인도 자동으로 리전에 맞게 바뀝니다: `<ACCOUNT_ID>.dkr.ecr.${AWS_REGION}.amazonaws.com`
-
-### 11) IAM 권한(최소 필요 예시)
-- ECR: `ecr:*`(push/pull), 최소한 `ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:CompleteLayerUpload`, `ecr:InitiateLayerUpload`, `ecr:PutImage`, `ecr:UploadLayerPart`
-- ECS: 서비스/태스크 정의 조회/배포(`ecs:*Describe*`, `ecs:UpdateService`, `iam:PassRole`)
-- CloudWatch Logs: 로그 그룹 생성/쓰기
-- Secrets Manager(선택): `secretsmanager:GetSecretValue`
-
-### 12) 자주 겪는 오류와 해결법 (Troubleshooting)
-- ALB 502/503: Target Group 헬스체크 실패 → 보안그룹/서브넷, 포트(8000/3000) 개방, 헬스엔드포인트(`/healthz`/`/`) 재확인
-- 백엔드 기동 실패: `DATABASE_URL` 또는 `REDIS_URL` 오타/보안그룹 미설정 → 접속 문자열과 SG 규칙 점검
-- 이미지 아키텍처 불일치: `--platform linux/amd64` 누락 → buildx 명령 재실행
-- 로그가 안 보임: awslogs 설정과 권한 확인(로그 그룹 `/ecs/aurora-backend`, `/ecs/aurora-frontend`)
-- RDS 연결 간헐 실패: 파라미터 그룹/서브넷 그룹, 멀티AZ 구성, 커넥션 수 제한 확인
-
-### 13) 정리(Cleanup)
-```bash
-# 태그 이미지 삭제
-aws ecr batch-delete-image \
-  --repository-name aurora-backend \
-  --image-ids imageTag=$TAG --region $AWS_REGION || true
-aws ecr batch-delete-image \
-  --repository-name aurora-frontend \
-  --image-ids imageTag=$TAG --region $AWS_REGION || true
-
-# (선택) 리포지토리 삭제
-aws ecr delete-repository --repository-name aurora-backend --force --region $AWS_REGION || true
-aws ecr delete-repository --repository-name aurora-frontend --force --region $AWS_REGION || true
-```
-
-### 배포 스크립트 사용(요약)
-배포는 환경변수를 채우고 로컬 스크립트를 실행하면 ECR까지 자동으로 진행됩니다. ECS 서비스 업데이트는 마지막에 한 번 콘솔에서 수행합니다.
-
-1) 환경변수 파일 생성/수정
-```bash
-cp deploy.env.example deploy.env
-# deploy.env를 열어 아래 값을 채웁니다
-# AWS_REGION, ACCOUNT_ID, IMAGE_TAG, DATABASE_URL, REDIS_URL 등
-```
-
-2) 스크립트 실행(이미지 빌드/푸시 자동)
-```bash
-./scripts/deploy.sh
-```
-
-3) ECS 서비스 업데이트(콘솔)
-- 백엔드/프론트엔드 태스크 정의에서 컨테이너 이미지 경로를 다음으로 업데이트
-  - Backend: ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aurora-backend:${IMAGE_TAG}
-  - Frontend: ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aurora-frontend:${IMAGE_TAG}
-- 해당 태스크 정의로 서비스를 배포(Force new deployment)
-- ALB Target Group 헬스체크 및 CloudWatch Logs로 정상 동작 확인
-
-참고: `scripts/deploy.sh`는 ECR 로그인/이미지 빌드 및 푸시까지 수행하며, ECS 서비스 업데이트는 안전을 위해 자동화하지 않았습니다.
-변수 설명(예시):
-```env
-# deploy.env
-AWS_REGION=ap-northeast-2
-ACCOUNT_ID=123456789012
-ECR_REGISTRY=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-IMAGE_TAG=20250101
-DATABASE_URL=postgresql+psycopg2://appuser:apppass@aurora.xxxxxx.ap-northeast-2.rds.amazonaws.com:5432/aurora
-REDIS_URL=redis://aurora-redis.xxxxxx.apn2.cache.amazonaws.com:6379/0
 ```
 
 ##  주요 기능
