@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react-swc';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    port: Number(process.env.FRONT_PORT || process.env.PORT || 3000),
     host: true,
     proxy: {
-      '/api': 'http://backend:8000',
-      '/static': 'http://backend:8000'
+      '/api': `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`,
+      '/static': `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`
     }
   }
 });

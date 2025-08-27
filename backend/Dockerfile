@@ -11,8 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 프로젝트 소스 코드를 복사합니다.
 COPY backend/ /app/
 
-# 8000번 포트를 외부에 노출합니다.
-EXPOSE 8000
+# 애플리케이션 포트를 환경변수 PORT로 노출합니다. 기본값은 런타임에서 결정됩니다.
+ARG PORT
+ENV PORT=${PORT}
+EXPOSE ${PORT}
 
 # 애플리케이션을 실행합니다.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-lc", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

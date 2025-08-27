@@ -38,11 +38,13 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-${PORT:-8000}}:${BACKEND_PORT:-${PORT:-8000}}"
     volumes:
       - ./backend:/app
     env_file:
       - ./.env
+    environment:
+      - PORT=${BACKEND_PORT:-${PORT:-8000}}
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,7 +55,13 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
+      - "${FRONT_PORT:-${PORT:-3000}}:${FRONT_PORT:-${PORT:-3000}}"
+    env_file:
+      - ./.env
+    environment:
+      - FRONT_PORT=${FRONT_PORT:-${PORT:-3000}}
+      - BACKEND_PORT=${BACKEND_PORT:-${PORT:-8000}}
+      - PORT=${FRONT_PORT:-${PORT:-3000}}
     volumes:
       - ./frontend:/app
       - /app/node_modules

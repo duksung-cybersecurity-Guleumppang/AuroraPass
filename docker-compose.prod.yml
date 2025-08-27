@@ -5,9 +5,9 @@ services:
   backend:
     image: ${ECR_REGISTRY}/aurora-backend:${IMAGE_TAG}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-${PORT:-8000}}:${BACKEND_PORT:-${PORT:-8000}}"
     environment:
-      - PORT=8000
+      - PORT=${BACKEND_PORT:-${PORT:-8000}}
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       - AWS_DEFAULT_REGION=${AWS_REGION}
@@ -17,7 +17,7 @@ services:
     ulimits:
       nofile: 65536
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8000/healthz || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:${BACKEND_PORT:-${PORT:-8000}}/healthz || exit 1" ]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -32,7 +32,7 @@ services:
   frontend:
     image: ${ECR_REGISTRY}/aurora-frontend:${IMAGE_TAG}
     ports:
-      - "3000:3000"
+      - "${FRONT_PORT:-${PORT:-3000}}:${FRONT_PORT:-${PORT:-3000}}"
     read_only: true
     restart: unless-stopped
     logging:
