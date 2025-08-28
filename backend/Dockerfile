@@ -4,6 +4,9 @@ FROM python:3.9-slim
 # 작업 디렉토리를 /app으로 설정합니다.
 WORKDIR /app
 
+# 전역 UTF-8 로케일/IO 인코딩 고정
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONIOENCODING=UTF-8
+
 # requirements.txt를 복사하고 의존성을 설치합니다.
 COPY backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt

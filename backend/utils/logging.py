@@ -1,6 +1,8 @@
 import structlog
 import logging
 import sys
+import json
+from functools import partial
 from typing import Any
 
 
@@ -20,7 +22,9 @@ def configure_logging() -> None:
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
-            structlog.dev.ConsoleRenderer() if sys.stderr.isatty() else structlog.processors.JSONRenderer(),
+            structlog.dev.ConsoleRenderer() if sys.stderr.isatty() else structlog.processors.JSONRenderer(
+                serializer=partial(json.dumps, ensure_ascii=False)
+            ),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
         logger_factory=structlog.WriteLoggerFactory(),
