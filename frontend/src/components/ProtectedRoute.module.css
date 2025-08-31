@@ -1,0 +1,16 @@
+/**
+ * 보호된 라우트 로딩 화면 스타일
+ * 사용자 인증이 진행 중일 때 표시되는 로딩 화면의 스타일을 정의합니다.
+ */
+
+.loadingContainer {
+    /* 전체 화면 높이를 차지하는 컨테이너 */
+    min-height: 100vh;
+    /* 로딩 텍스트를 화면 중앙에 배치하기 위한 flexbox 설정 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 로딩 텍스트 스타일 */
+    font-size: 16px;
+    color: #64748b;
+}
