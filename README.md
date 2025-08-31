@@ -1,125 +1,310 @@
 # Aurora Pass - 수강신청 시스템
 
-캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 Docker Compose로 통합 실행합니다.
+캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 **PostgreSQL + Redis**를 활용한 완전한 DB 기반 아키텍처입니다.
 
-## 프로젝트 구조
+## 데이터베이스 구성
 
-- `backend/`: FastAPI 백엔드 (오디오 CAPTCHA/회원가입 구현)
-- `frontend/`: Vite + React + TypeScript 프론트엔드 (로그인 UI, 오디오 CAPTCHA 연동)
-- `docs/`: API 명세 문서
-- `docker-compose.yml`: 백/프론트 컨테이너 정의
+### **PostgreSQL 15** (관계형 데이터)
+- **6개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**
+- **현재 데이터**: 1명 사용자, 5개 강의, 3개 CAPTCHA 오디오 파일, 1건 수강신청
 
-## 현재 구현 범위(요약)
+| 테이블 | 용도 | 레코드 수 |
+|---|---|---|
+| `users` | 사용자 정보 (UUID, username, email, password_hash) | 1 |
+| `courses` | 강의 정보 (id, title, capacity, enrolled_count) | 5 |
+| `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data) | 3 |
+| `carts` | 사용자별 장바구니 | 1 |
+| `cart_items` | 장바구니 아이템 | 0 |
+| `enrollments` | 수강신청 내역 | 1 |
 
-- 백엔드 API
-  - `GET /api/captcha/generate`: 오디오 CAPTCHA 발급 (오디오 경로/ID)
-  - `POST /api/captcha/verify`: CAPTCHA 검증
-  - `POST /api/users/register`: 회원가입(CAPTCHA 성공 필수, 인메모리 저장)
-  - `POST /api/users/login`: 로그인(.env 또는 환경변수의 `LOGIN_USERNAME`/`LOGIN_PASSWORD`와 비교)
-  - `GET /api/courses`: 강의 목록 조회
-  - `GET /api/cart`: 장바구니 조회
-  - `POST /api/cart`: 장바구니 추가
-  - `DELETE /api/cart/{courseId}`: 장바구니 제거
-  - `POST /api/enroll`: 본 신청(정원/중복 간단 처리)
-  - `GET /api/my-courses`: 신청 결과 조회
-- 프론트엔드
-  - 로그인 페이지 UI: 배경/로고, 아이디/비밀번호(초기 빈칸), 오디오 CAPTCHA(새로고침/검증), CAPTCHA 성공 시 로그인 버튼 활성화 → 성공 시 `/courses` 이동
-  - 수강신청 페이지 UI(`/courses`): 카드형 강의 목록, 장바구니 패널, 본 신청 버튼(데모 API 연동), 담긴 과목은 버튼이 '담김'으로 비활성화 표시
-  - 전역 빠른 클릭 감지: 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달 표시(5.png 흐름)
-  - 개발 서버 프록시: `/api`, `/static` → `backend:8000`
+### 테이블별 역할 요약
+* captcha_files: CAPTCHA 오디오와 정답 저장. 컬럼: id(파일 ID), filename, answer, audio_data(bytea), content_type, created_at  
+* users: 사용자 계정. 컬럼: id(UUID), username, email, password_hash, created_at  
+* courses: 강의 마스터. 컬럼: id, title, capacity, enrolled_count, updated_at  
+* carts: 사용자별 장바구니 컨테이너. 컬럼: id(UUID), user_id(UUID), created_at  
+* cart_items: 장바구니 항목. 복합 PK(cart_id, course_id), added_at  
+* enrollments: 수강신청 결과. 복합 PK(user_id, course_id), status(ENROLLED 등), created_at  
 
-## 시작하기
+### **Redis 7** (캐시/임시 데이터)
+- **키 패턴**:
+  - `captcha:{uuid}`: CAPTCHA 정답 (TTL 5분)
+  - `rl:{user_id}`: 속도제한 카운터 (TTL 3초)  
+  - `unlock:{user_id}`: CAPTCHA 통과 임시 토큰 (TTL 30초)
+
+## 로컬 실행 방법
 
 ### 요구사항
-
 - Docker Desktop (Docker, Docker Compose 포함)
 
-### 실행 방법 (Docker Compose 권장)
-
-1) 컨테이너 빌드 및 기동
+### 실행 방법
 ```bash
+# 1. 컨테이너 빌드 및 기동
 docker compose up --build
-```
 
-2) 접속 주소
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-- Backend Docs: `http://localhost:8000/docs`
+# 2. 접속 주소
+# - 프론트엔드: http://localhost:3000
+# - 백엔드 API: http://localhost:8000
+# - API 문서: http://localhost:8000/docs
+# - 헬스체크: http://localhost:8000/readyz
 
-3) 종료
-```bash
+# 3. 종료
 docker compose down
 ```
 
-4) 로그 확인(문제 발생 시)
+## 단일 서버(EC2 등)에서 전체 스택 배포
+
+아래 절차로 한 대 서버에 PostgreSQL/Redis/Backend/Frontend를 모두 Docker Compose로 기동할 수 있습니다.
+
+1) 서버 준비
+- Ubuntu 22.04 기준 Docker 설치 후 3000(프론트), 8000(백엔드) 포트를 보안그룹에서 허용합니다.
+
+2) 환경 파일 생성(.env)
 ```bash
-docker compose logs backend -n 200 | cat
-docker compose logs frontend -n 200 | cat
+cp example.env .env
+```
+`.env`를 열어 값을 설정합니다.
+
+
+3) 전체 스택 기동
+```bash
+docker compose up -d --build
+docker compose ps
 ```
 
-5) 환경변수(선택)
-- 백엔드 로그인 비교용 환경변수는 `LOGIN_USERNAME`, `LOGIN_PASSWORD` 입니다.
-
+4) 확인
 ```bash
-LOGIN_USERNAME=demo_user
-LOGIN_PASSWORD=demo_password
+# 백엔드 상태
+curl http://<SERVER_IP>:PORT/healthz
+
+# 프론트 접속(브라우저)
+http://<SERVER_IP>:PORT/
 ```
 
-### 로컬 개발 실행 (옵션)
+5) 운영 팁
+- 코드 갱신: `git pull && docker compose up -d --build`
+- 로그 확인: `docker compose logs backend -n 50` (frontend/postgres/redis 동일)
+- 완전 정리(주의: 데이터 삭제): `docker compose down -v`
 
-도커 없이 각각 실행해 개발할 때 사용합니다.
 
-- 백엔드(FastAPI)
+## AWS 설정 (도메인 연결 및 HTTPS 설정)
+
+`https://rainbowwings.co.kr`처럼 포트 없이 접속하려면, EC2 보안그룹, DNS, Nginx 리버스 프록시, TLS 인증서 설정이 필요합니다. 아래 순서대로 진행하세요.
+
+1) 보안그룹 열기(EC2)
+- 인바운드 규칙에 80(HTTP), 443(HTTPS)을 추가합니다.
+- 3000/8000 포트는 외부에 열지 않는 것을 권장합니다(내부용). 이미 열었다면 제거 또는 소스 제한을 고려하세요.
+
+2) DNS 설정
+- 도메인 관리 콘솔에서 A 레코드를 생성해 `도메인 → EC2 퍼블릭 IP`로 지정합니다.
+- 예: `rainbowwings.co.kr → 11.22.33.44`
+
+3) 애플리케이션 컨테이너 실행
+- `.env`에서 포트를 설정하고 전체 스택을 기동합니다.
 ```bash
-# uv 사용 권장 (미설치 시 https://docs.astral.sh/uv/ 참고)
+docker compose up -d --build
+```
+- 기본값 예시: `FRONT_PORT=3000`, `BACKEND_PORT=8000`
+
+4) Nginx 설치(리버스 프록시)
+```bash
+sudo apt update -y && sudo apt install -y nginx
+```
+
+5) Nginx 서버 블록 생성
+아래는 예시입니다.
+
+```bash
+sudo tee /etc/nginx/sites-available/rainbowwings.conf >/dev/null <<'NGINX'
+server {
+  listen 80;
+  server_name rainbowwings.co.kr;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+  server_name rainbowwings.co.kr;
+
+  # certbot 발급 후 아래 경로가 채워집니다
+  ssl_certificate /etc/letsencrypt/live/rainbowwings.co.kr/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/rainbowwings.co.kr/privkey.pem;
+
+  location /api/ {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  location /static/ {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+  }
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+  }
+}
+NGINX
+sudo ln -s /etc/nginx/sites-available/rainbowwings.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+6) HTTPS 인증서 발급(무료, Certbot)
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d rainbowwings.co.kr --email <your-email>@example.com --agree-tos --redirect
+```
+- 성공하면 Nginx 설정에 SSL 경로가 자동 반영되고, 80→443 리다이렉트가 켜집니다.
+
+7) 확인
+```bash
+curl -I https://rainbowwings.co.kr/healthz     # 200 또는 301/302 후 200
+open https://rainbowwings.co.kr                 # 브라우저 접속
+```
+
+문제 해결 팁
+- DNS 전파(수분~최대 수십분) 대기 후 테스트하세요.
+- Nginx 502/504: 컨테이너가 올라왔는지(`docker compose ps`)와 `.env`의 포트를 확인하세요.
+- 인증서 오류: `certbot renew --dry-run`으로 갱신 테스트, 방화벽/보안그룹 80/443 열림 확인.
+
+
+**한 줄 명령어로 PostgreSQL + Redis 포함 전체 스택 실행**
+
+### 로그 확인 (문제 발생 시)
+```bash
+docker compose logs backend -n 50
+docker compose logs frontend -n 50
+```
+
+## 데이터베이스 확인 방법
+
+### PostgreSQL 조회
+```bash
+# 테이블 목록
+docker exec aurora_postgres psql -U appuser -d aurora -c "\dt"
+
+# 레코드 수 확인
+docker exec aurora_postgres psql -U appuser -d aurora -c "
+SELECT 'users' as table_name, count(*) FROM users UNION ALL
+SELECT 'courses', count(*) FROM courses UNION ALL  
+SELECT 'captcha_files', count(*) FROM captcha_files;
+"
+
+# 강의 목록
+docker exec aurora_postgres psql -U appuser -d aurora -c "SELECT * FROM courses;"
+
+# CAPTCHA 파일 (DB 저장)
+docker exec aurora_postgres psql -U appuser -d aurora -c "
+SELECT id, filename, answer, length(audio_data) as file_size_bytes 
+FROM captcha_files;
+"
+```
+
+### Redis 조회
+```bash
+# 키 목록  
+docker exec aurora_redis redis-cli --scan
+
+# 특정 키 조회
+docker exec aurora_redis redis-cli GET "captcha:some-uuid"
+```
+
+### DB 버전/선택 확인
+```bash
+# 현재 실행 중 서비스(선택된 DB 종류 확인)
+docker compose ps
+
+# PostgreSQL 버전 확인
+docker exec aurora_postgres psql -U appuser -d aurora -c "SELECT version();"
+
+# Redis 버전 확인
+docker exec aurora_redis redis-cli INFO server | grep redis_version
+```
+
+## 프로젝트 구조
+
+```
+AuroraPass/
+├── docker-compose.yml          # 개발용 (PostgreSQL + Redis 포함)
+├── backend/
+│   ├── main.py                 # FastAPI 앱 + 헬스체크
+│   ├── db/
+│   │   ├── models.py           # SQLAlchemy ORM 모델
+│   │   ├── session.py          # DB 세션 팩토리
+│   │   ├── redis_client.py     # Redis 클라이언트
+│   │   └── init/               # DB 초기화 스크립트
+│   ├── repositories/           # 리포지토리 패턴
+│   ├── services/               # 비즈니스 로직
+│   ├── api/                    # FastAPI 라우터
+│   └── scripts/                # DB 유틸리티
+├── frontend/                   # Vite + React + TypeScript
+└── docs/                       # API 명세서
+```
+
+## API 테스트
+
+```bash
+# 헬스체크 (DB + Redis 상태)
+curl http://localhost:8000/readyz
+
+# 강의 목록
+curl http://localhost:8000/api/courses
+
+# CAPTCHA 생성 (DB 기반)
+curl http://localhost:8000/api/captcha/generate
+
+# 오디오 파일 다운로드 (DB에서 제공)
+curl http://localhost:8000/api/captcha/audio/sample1 --output test.wav
+
+# 장바구니 추가
+curl -X POST http://localhost:8000/api/cart \
+  -H "Content-Type: application/json" \
+  -d '{"courseId": "CS101"}'
+
+# 수강신청
+curl -X POST http://localhost:8000/api/enroll
+```
+
+##  주요 기능
+
+### 비정상 접근(CAPTCHA) 트리거
+- **프론트엔드**: 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달
+- **백엔드**: 동일 사용자 3초 내 5회 이상 API 요청 시 CAPTCHA 요구
+- **적용 경로**: `/api/courses`, `/api/cart`, `/api/enroll`, `/api/my-courses`
+
+## 로컬 개발 (옵션)
+
+Docker 없이 각각 실행할 때:
+
+```bash
+# 백엔드 (FastAPI)
 cd backend
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
 
-- 프론트엔드(Vite + React + TypeScript)
-```bash
+# 프론트엔드 (Vite + React + TypeScript)  
 cd frontend
 bun install
 bun run dev -- --host --port 3000
 ```
 
-프론트 개발 서버는 프록시로 `/api`, `/static`을 `http://localhost:8000`으로 전달합니다.
+## 구현 상세
 
-## 개발 메모
+### 로그인 플로우
+1. 아이디/비밀번호 입력
+2. 오디오 CAPTCHA 성공  
+3. 로그인 API(`/api/users/login`) 성공 시 `/courses` 이동
 
-- 프론트엔드 개발 서버는 Bun 기반(`oven/bun`)으로 동작합니다.
-- 정적 오디오 파일은 백엔드에서 `/static/audio/*.wav` 경로로 서빙됩니다.
-- 추후 구현 예정: 로그인/세션, 강의/장바구니/수강신청 API, 비정상 접근 탐지/재CAPTCHA, DB 영속화.
+### 수강신청 플로우  
+1. 강의 목록 → 장바구니 담기/제거
+2. 본 신청(`/api/enroll`) → 결과 메시지 표시
+3. 정원/상태 갱신 (PostgreSQL 트랜잭션)
 
-### 비정상 접근(CAPTCHA) 트리거
-- 프론트(UI): 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달을 표시합니다.
-- 백엔드(API): 동일 사용자 기준 3초 내 5회 이상 요청 시 서버가 CAPTCHA를 요구합니다.
-- 적용 경로: `/api/courses`, `/api/cart`(GET/POST/DELETE), `/api/enroll`, `/api/my-courses`
-- 응답 예(요구 시):
-```json
-{
-  "requireCaptcha": true,
-  "captcha": { "captchaId": "...", "audioPath": "/static/audio/sample1.wav" }
-}
-```
-프론트에서 모달로 오디오 재생/정답 제출 후 `/api/enroll/unlock`을 통해 1회 신청이 허용됩니다.
+### CAPTCHA 시스템
+- **생성**: DB에서 랜덤 선택 → Redis에 정답 저장 (TTL 5분)
+- **제공**: `/api/captcha/audio/{id}`로 PostgreSQL에서 바이너리 스트리밍  
+- **검증**: Redis 정답 확인 → 성공 시 30초간 임시 토큰 발급
 
-## 구현 상세(확인용 체크리스트)
-- 로그인 플로우: 아이디/비밀번호 입력 → 오디오 CAPTCHA 성공 → 로그인 API(`/api/users/login`) 성공 시 `/courses` 이동
-- 수강신청 플로우: 강의 목록 → 장바구니 담기/제거 → 본 신청(`/api/enroll`) → 결과 메시지 표시 및 정원/상태 갱신
-- 장바구니 버튼 상태: 이미 담긴 과목 또는 정원 초과 과목은 비활성화
-- 데모 데이터/정답 파일: 변경 즉시 반영, 백엔드 재시작으로 인메모리 상태 초기화
+---
 
-### CAPTCHA 정답 데이터
-- 정답은 JSON 파일로 관리됩니다: `backend/static/audio/captcha_answers.json`
-
-### 강의 데모 데이터
-- 강의 목록 데모 데이터는 JSON 파일로 관리됩니다: `backend/static/demo/courses.json`
-- 값을 수정하면 API와 UI에 반영됩니다.
-
-## API 명세 문서
-
-- `docs/01_user_api.md`: 사용자 관련 API
-- `docs/02_courses_api.md`: 강의 관련 API
-- `docs/03_registration_api.md`: 수강신청 관련 API
-- `docs/04_captcha_api.md`: CAPTCHA API 상세
+**관련 문서**: `docs/` 폴더에서 상세 API 명세 확인

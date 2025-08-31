@@ -1,23 +1,80 @@
 services:
+  postgres:
+    image: postgres:15
+    container_name: aurora_postgres
+    environment:
+      - POSTGRES_DB=aurora
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppass
+    ports:
+      - "5432:5432"
+    volumes:
+      - aurora_pgdata:/var/lib/postgresql/data
+      - ./backend/db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U appuser -d aurora" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [ app-net ]
+
+  redis:
+    image: redis:7-alpine
+    container_name: aurora_redis
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - aurora_redisdata:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [ app-net ]
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-${PORT:-8000}}:${BACKEND_PORT:-${PORT:-8000}}"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./.env
     environment:
-      - LOGIN_USERNAME=${LOGIN_USERNAME}
-      - LOGIN_PASSWORD=${LOGIN_PASSWORD}
+      - PORT=${BACKEND_PORT:-${PORT:-8000}}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [ app-net ]
 
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
+      - "${FRONT_PORT:-${PORT:-3000}}:${FRONT_PORT:-${PORT:-3000}}"
+    env_file:
+      - ./.env
+    environment:
+      - FRONT_PORT=${FRONT_PORT:-${PORT:-3000}}
+      - BACKEND_PORT=${BACKEND_PORT:-${PORT:-8000}}
+      - PORT=${FRONT_PORT:-${PORT:-3000}}
     volumes:
       - ./frontend:/app
       - /app/node_modules
     command: sh -lc "bun install && bun run dev"
     depends_on:
       - backend
+    networks: [ app-net ]
+
+volumes:
+  aurora_pgdata:
+  aurora_redisdata:
+
+
+networks:
+  app-net:
+    driver: bridge

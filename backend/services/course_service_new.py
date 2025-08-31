@@ -26,16 +26,16 @@ class CourseService:
         # Merge with demo data for display
         result = []
         for db_course in db_courses:
-            demo_course = self.demo_courses.get(db_course["id"])
+            demo_course = self.demo_courses.get(db_course.id)
             if demo_course:
                 # Use DB data for capacity/enrolled, demo data for title/professor/schedule
                 course_data = Course(
-                    course_id=db_course["id"],
+                    course_id=db_course.id,
                     title=demo_course.title,
                     professor=getattr(demo_course, 'professor', 'Unknown'),
                     schedule=getattr(demo_course, 'schedule', 'TBA'),
-                    capacity=db_course["capacity"],
-                    enrolled=db_course["enrolled_count"]
+                    capacity=db_course.capacity,
+                    enrolled=db_course.enrolled_count
                 )
                 result.append(course_data)
         
@@ -47,15 +47,15 @@ class CourseService:
         
         result = []
         for db_course in db_courses:
-            demo_course = self.demo_courses.get(db_course["id"])
+            demo_course = self.demo_courses.get(db_course.id)
             if demo_course:
                 course_data = Course(
-                    course_id=db_course["id"],
+                    course_id=db_course.id,
                     title=demo_course.title,
                     professor=getattr(demo_course, 'professor', 'Unknown'),
                     schedule=getattr(demo_course, 'schedule', 'TBA'),
-                    capacity=db_course["capacity"],
-                    enrolled=db_course["enrolled_count"]
+                    capacity=db_course.capacity,
+                    enrolled=db_course.enrolled_count
                 )
                 result.append(course_data)
         
@@ -93,15 +93,15 @@ class CourseService:
         
         result = []
         for db_course in db_courses:
-            demo_course = self.demo_courses.get(db_course["id"])
+            demo_course = self.demo_courses.get(db_course.id)
             if demo_course:
                 course_data = Course(
-                    course_id=db_course["id"],
+                    course_id=db_course.id,
                     title=demo_course.title,
                     professor=getattr(demo_course, 'professor', 'Unknown'),
                     schedule=getattr(demo_course, 'schedule', 'TBA'),
-                    capacity=db_course["capacity"],
-                    enrolled=db_course["enrolled_count"]
+                    capacity=db_course.capacity,
+                    enrolled=db_course.enrolled_count
                 )
                 result.append(course_data)
         
