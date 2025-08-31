@@ -1,25 +1,36 @@
+/**
+ * 로그인 페이지 컴포넌트
+ * 사용자 인증과 캡차 검증 기능을 제공합니다.
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Captcha } from './Login.types';
 import bgImage from '../../images/Home_screen_background.jpg';
 import logoImage from '../../images/logo.jpg';
+import styles from './Login.module.css';
 
-type Captcha = { captchaId: string; audioPath: string };
-
+/**
+ * 로그인 메인 페이지 컴포넌트
+ * @returns {JSX.Element} 로그인 페이지 JSX
+ */
 export default function LoginPage() {
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAuth();
-  // 초기값은 비워둡니다. (.env 값은 placeholder로만 사용)
+  
+  // 플레이스홀더 값 (환경변수에서 가져올 수 있지만 현재는 빈 값)
   const placeholderUsername = useMemo(() => '', []);
   const placeholderPassword = useMemo(() => '', []);
 
-  // 이미 로그인된 사용자는 courses 페이지로 리다이렉트
+  // 이미 로그인된 사용자는 수강신청 페이지로 리디렉션
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/courses', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
+  // 상태 관리
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [captcha, setCaptcha] = useState<Captcha | null>(null);
@@ -29,6 +40,10 @@ export default function LoginPage() {
   const [loginMsg, setLoginMsg] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
+  /**
+   * 새로운 캡차를 서버에서 가져오는 함수
+   * 캡차 상태를 초기화하고 새로운 캡차 데이터를 받아옵니다.
+   */
   const fetchCaptcha = async () => {
     setCaptchaMsg('');
     setCaptchaVerified(false);
@@ -38,6 +53,10 @@ export default function LoginPage() {
     setCaptcha(data);
   };
 
+  /**
+   * 캡차 인증을 확인하는 함수
+   * 사용자가 입력한 캡차 답안을 서버에서 검증합니다.
+   */
   const verifyCaptcha = async () => {
     if (!captcha) return;
     const res = await fetch('/api/captcha/verify', {
@@ -50,6 +69,10 @@ export default function LoginPage() {
     setCaptchaVerified(!!data.success);
   };
 
+  /**
+   * 로그인을 처리하는 함수
+   * 캡차 검증이 완료된 경우에만 로그인을 시도합니다.
+   */
   const onLogin = async () => {
     if (!captchaVerified) return;
     setLoggingIn(true);
@@ -68,68 +91,53 @@ export default function LoginPage() {
     }
   };
 
+  // 컴포넌트 마운트 시 캡차 생성
   useEffect(() => { fetchCaptcha(); }, []);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundImage: `url(${bgImage})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 24
-    }}>
-      <div style={{
-        width: 420,
-        background: 'rgba(255,255,255,0.9)',
-        borderRadius: 12,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        padding: 24,
-        backdropFilter: 'blur(4px)'
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
-          <img src={logoImage} alt="logo" style={{ width: 120, height: 'auto', borderRadius: 8 }} />
-          <h1 style={{ margin: '12px 0 0', fontSize: 20 }}>로그인</h1>
+    <div className={styles.loginPage} style={{ backgroundImage: `url(${bgImage})` }}>
+      <div className={styles.loginFormContainer}>
+        <div className={styles.loginHeader}>
+          <img src={logoImage} alt="logo" className={styles.loginLogo} />
+          <h1 className={styles.loginTitle}>로그인</h1>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <label style={{ fontSize: 14 }}>아이디</label>
+        <div className={styles.loginForm}>
+          <label className={styles.formLabel}>아이디</label>
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder={placeholderUsername}
-            style={{ padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8 }}
+            className={styles.formInput}
           />
 
-          <label style={{ fontSize: 14, marginTop: 6 }}>비밀번호</label>
+          <label className={styles.formLabelPassword}>비밀번호</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={placeholderPassword}
-            style={{ padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8 }}
+            className={styles.formInput}
           />
 
-          <div style={{ marginTop: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className={styles.captchaSection}>
+            <div className={styles.captchaHeader}>
               <strong>오디오 CAPTCHA</strong>
-              <button onClick={fetchCaptcha} style={{ padding: '6px 10px' }}>새로고침</button>
+              <button onClick={fetchCaptcha} className={styles.captchaRefreshBtn}>새로고침</button>
             </div>
             {captcha && (
-              <div style={{ marginTop: 8 }}>
-                <audio controls src={captcha.audioPath} style={{ width: '100%' }} />
-                <div style={{ marginTop: 6, display: 'flex', gap: 8 }}>
+              <div className={styles.captchaContent}>
+                <audio controls src={captcha.audioPath} className={styles.captchaAudioElement} />
+                <div className={styles.captchaInputRow}>
                   <input
                     value={captchaInput}
                     onChange={(e) => setCaptchaInput(e.target.value)}
                     placeholder="정답 입력"
-                    style={{ flex: 1, padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8 }}
+                    className={styles.captchaInputField}
                   />
-                  <button onClick={verifyCaptcha} style={{ padding: '8px 12px' }}>검증</button>
+                  <button onClick={verifyCaptcha} className={styles.captchaVerifyBtn}>검증</button>
                 </div>
-                {captchaMsg && <p style={{ marginTop: 6, fontSize: 13 }}>{captchaMsg}</p>}
+                {captchaMsg && <p className={styles.captchaMessage}>{captchaMsg}</p>}
               </div>
             )}
           </div>
@@ -137,20 +145,11 @@ export default function LoginPage() {
           <button
             onClick={onLogin}
             disabled={loggingIn || !captchaVerified || !username || !password}
-            style={{
-              marginTop: 14,
-              padding: '12px 14px',
-              borderRadius: 10,
-              border: 'none',
-              color: 'white',
-              background: (loggingIn || !captchaVerified || !username || !password) ? '#b5c0c9' : '#2563eb',
-              cursor: (loggingIn || !captchaVerified || !username || !password) ? 'not-allowed' : 'pointer',
-              fontWeight: 600
-            }}
+            className={styles.loginButton}
           >
             {loggingIn ? '로그인 중…' : '로그인'}
           </button>
-          {loginMsg && <p style={{ marginTop: 8, fontSize: 13 }}>{loginMsg}</p>}
+          {loginMsg && <p className={styles.loginMessage}>{loginMsg}</p>}
         </div>
       </div>
     </div>

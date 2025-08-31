@@ -1,34 +1,47 @@
+/**
+ * 수강신청 페이지 컴포넌트
+ * 강의 목록 조회, 장바구니 관리, 수강신청 기능을 제공합니다.
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Course, CaptchaModalState, ClickDetectorProps } from './Courses.types';
+import styles from './Courses.module.css';
 
-type Course = {
-  courseId: string;
-  title: string;
-  professor: string;
-  schedule: string;
-  capacity: number;
-  enrolled: number;
-};
-
+/**
+ * 수강신청 메인 페이지 컴포넌트
+ * @returns {JSX.Element} 수강신청 페이지 JSX
+ */
 export default function CoursesPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  
+  // 상태 관리
   const [courses, setCourses] = useState<Course[]>([]);
   const [cart, setCart] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [captchaModal, setCaptchaModal] = useState<{ open: boolean; captchaId?: string; audioPath?: string }>({ open: false });
+  const [captchaModal, setCaptchaModal] = useState<CaptchaModalState>({ open: false });
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaMsg, setCaptchaMsg] = useState('');
   const [uiCaptchaRequired, setUiCaptchaRequired] = useState(false);
   const clickTimesRef = useRef<number[]>([]);
 
+  /**
+   * 로그아웃 처리 함수
+   * 사용자를 로그아웃하고 메인 페이지로 이동합니다.
+   */
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  /**
+   * 서버 응답에 따라 캡차 모달을 열어야 하는지 확인하는 함수
+   * @param {any} data - 서버 응답 데이터
+   * @returns {boolean} 캡차 모달이 열렸는지 여부
+   */
   const openCaptchaIfNeeded = (data: any): boolean => {
     if (uiCaptchaRequired) {
       if (!captchaModal.open) {
@@ -51,6 +64,9 @@ export default function CoursesPage() {
     return false;
   };
 
+  /**
+   * 강의 목록을 서버에서 가져오는 함수
+   */
   const fetchCourses = async () => {
     const res = await fetch('/api/courses');
     let data: any = [];
@@ -59,6 +75,9 @@ export default function CoursesPage() {
     setCourses(Array.isArray(data) ? data : []);
   };
 
+  /**
+   * 장바구니 목록을 서버에서 가져오는 함수
+   */
   const fetchCart = async () => {
     const res = await fetch('/api/cart');
     let data: any = [];
@@ -67,6 +86,10 @@ export default function CoursesPage() {
     setCart(Array.isArray(data) ? data : []);
   };
 
+  /**
+   * 강의를 장바구니에 추가하는 함수
+   * @param {string} courseId - 추가할 강의 ID
+   */
   const addToCart = async (courseId: string) => {
     const res = await fetch('/api/cart', {
       method: 'POST',
@@ -79,6 +102,10 @@ export default function CoursesPage() {
     fetchCart();
   };
 
+  /**
+   * 장바구니에서 강의를 제거하는 함수
+   * @param {string} courseId - 제거할 강의 ID
+   */
   const removeFromCart = async (courseId: string) => {
     const res = await fetch(`/api/cart/${courseId}`, { method: 'DELETE' });
     let data: any = {};
@@ -87,6 +114,10 @@ export default function CoursesPage() {
     fetchCart();
   };
 
+  /**
+   * 수강신청을 실행하는 함수
+   * 장바구니에 담긴 모든 강의에 대해 신청을 진행합니다.
+   */
   const enroll = async () => {
     setLoading(true);
     setMessage('');
@@ -105,6 +136,10 @@ export default function CoursesPage() {
     }
   };
 
+  /**
+   * 캡차 인증을 제출하는 함수
+   * 캡차 인증 성공 시 수강신청을 재시도합니다.
+   */
   const submitCaptcha = async () => {
     if (!captchaModal.captchaId) return;
     setCaptchaMsg('');
@@ -119,13 +154,16 @@ export default function CoursesPage() {
       setCaptchaInput('');
       setUiCaptchaRequired(false);
       clickTimesRef.current = [];
-      // 1회 허용으로 즉시 재시도
+      // 캡차 인증 성공 후 수강신청 재시도
       await enroll();
     } else {
       setCaptchaMsg(data?.message || 'CAPTCHA 인증 실패');
     }
   };
 
+  /**
+   * 새로운 캡차를 생성하고 모달을 여는 함수
+   */
   const refreshCaptcha = async () => {
     setCaptchaMsg('');
     setCaptchaInput('');
@@ -134,68 +172,35 @@ export default function CoursesPage() {
     setCaptchaModal({ open: true, captchaId: data?.captchaId, audioPath: data?.audioPath });
   };
 
+  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     fetchCourses();
     fetchCart();
   }, []);
 
+  // 장바구니에 담긴 강의 ID들을 Set으로 변환 (성능 최적화)
   const cartIdSet = useMemo(() => new Set(cart.map((c) => c.courseId)), [cart]);
 
-  const colors = {
-    bg: '#f6f8fb',
-    surface: '#ffffff',
-    text: '#0f172a',
-    subText: '#64748b',
-    border: '#e2e8f0',
-    primary: '#2563eb',
-    primaryHover: '#1d4ed8',
-    danger: '#ef4444',
-    dangerHover: '#dc2626'
-  } as const;
-
-  const buttonBase: React.CSSProperties = {
-    padding: '10px 14px',
-    borderRadius: 10,
-    border: '1px solid transparent',
-    fontWeight: 600,
-    cursor: 'pointer'
-  };
-
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg }}>
+    <div className={styles.coursesPage}>
       {/* Header */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        background: colors.surface,
-        borderBottom: `1px solid ${colors.border}`,
-        padding: '14px 24px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-          <h1 style={{ margin: 0, fontSize: 20, color: colors.text }}>수강신청</h1>
-          <span style={{ color: colors.subText, fontSize: 13 }}>데모</span>
+      <header className={styles.coursesHeader}>
+        <div className={styles.headerTitleSection}>
+          <h1 className={styles.headerTitle}>수강신청</h1>
+          <span className={styles.headerSubtitle}>데모</span>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span style={{ color: colors.subText, fontSize: 14 }}>장바구니 {cart.length}개</span>
+        <div className={styles.headerActions}>
+          <span className={styles.cartCount}>장바구니 {cart.length}개</span>
           <button
             onClick={handleLogout}
-            style={{
-              ...buttonBase,
-              background: colors.danger,
-              color: '#fff'
-            }}
+            className={`${styles.buttonBase} ${styles.logoutButton}`}
           >
             로그아웃
           </button>
           <button
             onClick={enroll}
             disabled={loading || cart.length === 0}
-            style={{
-              ...buttonBase,
-              background: (loading || cart.length === 0) ? '#cbd5e1' : colors.primary,
-              color: '#fff',
-              cursor: (loading || cart.length === 0) ? 'not-allowed' : 'pointer'
-            }}
+            className={`${styles.buttonBase} ${styles.enrollButton} ${(loading || cart.length === 0) ? styles.enrollButtonDisabled : ''}`}
           >
             {loading ? '신청 중…' : '수강신청'}
           </button>
@@ -203,36 +208,28 @@ export default function CoursesPage() {
       </header>
 
       {/* Content */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+      <div className={styles.coursesContent}>
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className={styles.coursesListHeader}>
             <div>
-              <div style={{ fontSize: 16, color: colors.text, fontWeight: 700 }}>개설 강의 목록</div>
-              <div style={{ fontSize: 13, color: colors.subText }}>정원/시간표 확인 후 장바구니에 담아 신청하세요.</div>
+              <div className={styles.coursesListTitle}>개설 강의 목록</div>
+              <div className={styles.coursesListSubtitle}>정원/시간표 확인 후 장바구니에 담아 신청하세요.</div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, marginTop: 16 }}>
+          <div className={styles.coursesGrid}>
             {courses.map((c) => (
-              <div key={c.courseId} style={{
-                background: colors.surface,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 12,
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)'
-              }}>
-                <div style={{ padding: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <strong style={{ color: colors.text }}>{c.title}</strong>
-                    <span style={{ fontSize: 12, color: colors.subText }}>{c.courseId}</span>
+              <div key={c.courseId} className={styles.courseCard}>
+                <div className={styles.courseCardContent}>
+                  <div className={styles.courseCardHeader}>
+                    <strong className={styles.courseTitle}>{c.title}</strong>
+                    <span className={styles.courseId}>{c.courseId}</span>
                   </div>
-                  <div style={{ marginTop: 6, fontSize: 14, color: colors.text }}>{c.professor}</div>
-                  <div style={{ marginTop: 4, fontSize: 13, color: colors.subText }}>{c.schedule}</div>
+                  <div className={styles.courseProfessor}>{c.professor}</div>
+                  <div className={styles.courseSchedule}>{c.schedule}</div>
                 </div>
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '10px 14px', borderTop: `1px dashed ${colors.border}`
-                }}>
-                  <div style={{ fontSize: 13, color: colors.subText }}>정원 {c.enrolled}/{c.capacity}</div>
+                <div className={styles.courseCardFooter}>
+                  <div className={styles.courseCapacity}>정원 {c.enrolled}/{c.capacity}</div>
                   {(() => {
                     const inCart = cartIdSet.has(c.courseId);
                     const disabled = inCart || c.enrolled >= c.capacity;
@@ -240,12 +237,7 @@ export default function CoursesPage() {
                       <button
                         onClick={() => addToCart(c.courseId)}
                         disabled={disabled}
-                        style={{
-                          ...buttonBase,
-                          background: disabled ? '#cbd5e1' : colors.primary,
-                          color: '#fff',
-                          cursor: disabled ? 'not-allowed' : 'pointer'
-                        }}
+                        className={`${styles.buttonBase} ${styles.addToCartButton} ${disabled ? styles.addToCartButtonDisabled : ''}`}
                       >
                         {inCart ? '담김' : '장바구니'}
                       </button>
@@ -257,33 +249,20 @@ export default function CoursesPage() {
           </div>
         </section>
 
-        <aside style={{ position: 'sticky', top: 76, alignSelf: 'start' }}>
-          <div style={{
-            background: colors.surface,
-            border: `1px solid ${colors.border}`,
-            borderRadius: 12,
-            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
-            padding: 14
-          }}>
-            <h2 style={{ margin: 0, fontSize: 16, color: colors.text }}>장바구니</h2>
-            <div style={{ marginTop: 8, minHeight: 180 }}>
-              {cart.length === 0 && <div style={{ color: colors.subText, padding: '8px 4px' }}>담긴 과목이 없습니다.</div>}
+        <aside className={styles.cartSidebar}>
+          <div className={styles.cartContainer}>
+            <h2 className={styles.cartTitle}>장바구니</h2>
+            <div className={styles.cartContent}>
+              {cart.length === 0 && <div className={styles.cartEmpty}>담긴 과목이 없습니다.</div>}
               {cart.map((c) => (
-                <div key={c.courseId} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '10px 6px', borderBottom: `1px dashed ${colors.border}`
-                }}>
+                <div key={c.courseId} className={styles.cartItem}>
                   <div>
-                    <div style={{ fontWeight: 600, color: colors.text }}>{c.title}</div>
-                    <div style={{ fontSize: 12, color: colors.subText }}>{c.courseId}</div>
+                    <div className={styles.cartItemTitle}>{c.title}</div>
+                    <div className={styles.cartItemId}>{c.courseId}</div>
                   </div>
                   <button
                     onClick={() => removeFromCart(c.courseId)}
-                    style={{
-                      ...buttonBase,
-                      background: colors.danger,
-                      color: '#fff'
-                    }}
+                    className={`${styles.buttonBase} ${styles.removeButton}`}
                   >
                     제거
                   </button>
@@ -294,19 +273,12 @@ export default function CoursesPage() {
             <button
               onClick={enroll}
               disabled={loading || cart.length === 0}
-              style={{
-                ...buttonBase,
-                width: '100%',
-                marginTop: 8,
-                background: (loading || cart.length === 0) ? '#cbd5e1' : colors.primary,
-                color: '#fff',
-                cursor: (loading || cart.length === 0) ? 'not-allowed' : 'pointer'
-              }}
+              className={`${styles.buttonBase} ${styles.enrollButton} ${styles.cartEnrollButton} ${(loading || cart.length === 0) ? styles.enrollButtonDisabled : ''}`}
             >
               {loading ? '신청 중…' : '수강신청'}
             </button>
 
-            {message && <p style={{ marginTop: 8, fontSize: 13, color: colors.text }}>{message}</p>}
+            {message && <p className={styles.message}>{message}</p>}
           </div>
         </aside>
       </div>
@@ -323,28 +295,26 @@ export default function CoursesPage() {
 
       {/* CAPTCHA Modal */}
       {captchaModal.open && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 16, width: 420 }}>
-            <h3 style={{ marginTop: 0 }}>추가 인증이 필요합니다</h3>
-            <p style={{ marginTop: 4, color: '#475569', fontSize: 14 }}>아래 오디오를 듣고 들은 단어를 입력하세요.</p>
-            <div style={{ marginTop: 8 }}>
-              <audio controls src={captchaModal.audioPath} style={{ width: '100%' }} />
+        <div className={styles.captchaModalOverlay}>
+          <div className={styles.captchaModalContent}>
+            <h3 className={styles.captchaModalTitle}>추가 인증이 필요합니다</h3>
+            <p className={styles.captchaModalDescription}>아래 오디오를 듣고 들은 단어를 입력하세요.</p>
+            <div className={styles.captchaAudioContainer}>
+              <audio controls src={captchaModal.audioPath} className={styles.captchaAudio} />
             </div>
-            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            <div className={styles.captchaInputSection}>
               <input
                 value={captchaInput}
                 onChange={(e) => setCaptchaInput(e.target.value)}
                 placeholder="정답 입력"
-                style={{ flex: 1, padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8 }}
+                className={styles.captchaInput}
               />
-              <button onClick={submitCaptcha} style={{ padding: '10px 14px', borderRadius: 8, background: '#2563eb', color: '#fff', fontWeight: 600 }}>확인</button>
-              <button onClick={refreshCaptcha} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>새로고침</button>
+              <button onClick={submitCaptcha} className={styles.captchaSubmitButton}>확인</button>
+              <button onClick={refreshCaptcha} className={styles.captchaRefreshButton}>새로고침</button>
             </div>
-            {captchaMsg && <p style={{ marginTop: 6, fontSize: 13, color: '#dc2626' }}>{captchaMsg}</p>}
-            <div style={{ marginTop: 8, textAlign: 'right' }}>
-              <button onClick={() => setCaptchaModal({ open: false })} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0' }}>닫기</button>
+            {captchaMsg && <p className={styles.captchaMessage}>{captchaMsg}</p>}
+            <div className={styles.captchaModalActions}>
+              <button onClick={() => setCaptchaModal({ open: false })} className={styles.captchaCloseButton}>닫기</button>
             </div>
           </div>
         </div>
@@ -353,24 +323,38 @@ export default function CoursesPage() {
   );
 }
 
-function ClickDetector({ enabled, onTrigger, clickTimesRef }: { enabled: boolean; onTrigger: () => void | Promise<void>; clickTimesRef: React.MutableRefObject<number[]> }) {
+/**
+ * 빠른 클릭을 감지하여 캡차를 트리거하는 컴포넌트
+ * 3초 내에 5번 이상 클릭하면 캡차 인증을 요구합니다.
+ * @param {ClickDetectorProps} props - 컴포넌트 props
+ * @returns {null} 렌더링되지 않는 컴포넌트
+ */
+function ClickDetector({ enabled, onTrigger, clickTimesRef }: ClickDetectorProps) {
   useEffect(() => {
     if (!enabled) return;
+    
     const handler = () => {
       const now = Date.now();
-      const windowMs = 3000;
-      const threshold = 5;
+      const windowMs = 3000; // 3초 윈도우
+      const threshold = 5; // 임계값: 5회 클릭
+      
+      // 3초 내의 클릭만 필터링
       const filtered = clickTimesRef.current.filter((t) => now - t < windowMs);
       filtered.push(now);
       clickTimesRef.current = filtered;
+      
+      // 임계값 도달 시 캡차 트리거
       if (filtered.length >= threshold) {
         clickTimesRef.current = [];
         onTrigger();
       }
     };
+    
+    // 전체 문서에 클릭 이벤트 리스너 등록
     document.addEventListener('click', handler, true);
     return () => document.removeEventListener('click', handler, true);
   }, [enabled, onTrigger, clickTimesRef]);
+  
   return null;
 }
 

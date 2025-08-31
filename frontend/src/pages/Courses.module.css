@@ -1,0 +1,317 @@
+/**
+ * 수강신청 페이지 스타일
+ * 전체 레이아웃, 헤더, 강의 카드, 장바구니, 캡차 모달의 스타일을 정의합니다.
+ */
+
+/* 전체 페이지 배경 */
+.coursesPage {
+    min-height: 100vh;
+    background: #f6f8fb;
+}
+
+/* 헤더 스타일 */
+.coursesHeader {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.headerTitleSection {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+}
+
+.headerTitle {
+    margin: 0;
+    font-size: 20px;
+    color: #0f172a;
+}
+
+.headerSubtitle {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.headerActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.cartCount {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* 버튼 기본 스타일 */
+.buttonBase {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.logoutButton {
+    background: #ef4444;
+    color: #fff;
+}
+
+.enrollButton {
+    background: #2563eb;
+    color: #fff;
+}
+
+.enrollButtonDisabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+/* 메인 콘텐츠 레이아웃 */
+.coursesContent {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 강의 목록 섹션 */
+.coursesListHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.coursesListTitle {
+    font-size: 16px;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.coursesListSubtitle {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.coursesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* 강의 카드 */
+.courseCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.courseCardContent {
+    padding: 14px;
+}
+
+.courseCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.courseTitle {
+    color: #0f172a;
+}
+
+.courseId {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.courseProfessor {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.courseSchedule {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.courseCardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.courseCapacity {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.addToCartButton {
+    background: #2563eb;
+    color: #fff;
+}
+
+.addToCartButton:disabled,
+.addToCartButtonDisabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+/* 장바구니 사이드바 */
+.cartSidebar {
+    position: sticky;
+    top: 76px;
+    align-self: start;
+}
+
+.cartContainer {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    padding: 14px;
+}
+
+.cartTitle {
+    margin: 0;
+    font-size: 16px;
+    color: #0f172a;
+}
+
+.cartContent {
+    margin-top: 8px;
+    min-height: 180px;
+}
+
+.cartEmpty {
+    color: #64748b;
+    padding: 8px 4px;
+}
+
+.cartItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 6px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.cartItemTitle {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.cartItemId {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.removeButton {
+    background: #ef4444;
+    color: #fff;
+}
+
+.cartEnrollButton {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.message {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #0f172a;
+}
+
+/* 캡차 모달 */
+.captchaModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.captchaModalContent {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    width: 420px;
+}
+
+.captchaModalTitle {
+    margin-top: 0;
+}
+
+.captchaModalDescription {
+    margin-top: 4px;
+    color: #475569;
+    font-size: 14px;
+}
+
+.captchaAudioContainer {
+    margin-top: 8px;
+}
+
+.captchaAudio {
+    width: 100%;
+}
+
+.captchaInputSection {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+}
+
+.captchaInput {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.captchaSubmitButton {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+}
+
+.captchaRefreshButton {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.captchaMessage {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #dc2626;
+}
+
+.captchaModalActions {
+    margin-top: 8px;
+    text-align: right;
+}
+
+.captchaCloseButton {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
