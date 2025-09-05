@@ -21,12 +21,12 @@ export default defineConfig({
     proxy: {
       // API 요청을 백엔드 서버로 프록시 (CORS 문제 해결)
       '/api': { 
-        target: `http://localhost:${process.env.BACKEND_PORT || process.env.PORT || 8000}`, 
+        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`, 
         changeOrigin: true 
       },
       // 정적 파일 요청을 백엔드 서버로 프록시
       '/static': { 
-        target: `http://localhost:${process.env.BACKEND_PORT || process.env.PORT || 8000}`, 
+        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`, 
         changeOrigin: true 
       },
     },
