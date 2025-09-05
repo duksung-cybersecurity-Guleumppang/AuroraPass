@@ -1,0 +1,99 @@
+/**
+ * 수강신청 성공한 과목 목록 컴포넌트
+ * 수강신청에 성공한 강의 목록을 표시합니다.
+ * 사용자가 현재 수강신청한 과목들을 확인하고 수강취소 기능을 제공합니다.
+ */
+
+import React from 'react';
+import { Course } from '../../../shared/types/courses';
+import styles from '../../../pages/courses/Courses.module.css';
+import enrolledCoursesStyles from './EnrolledCourses.module.css';
+import { COURSE_DEFAULTS, ENROLLMENT_MESSAGES } from '../../../shared/constants/courses';
+
+/**
+ * EnrolledCourses 컴포넌트의 props 인터페이스
+ * @interface EnrolledCoursesProps
+ * @property {Course[]} enrolledCourses - 수강신청에 성공한 강의 목록 배열
+ * @property {(courseId: string) => void} onCancelEnrollment - 수강취소 시 실행될 콜백 함수
+ */
+interface EnrolledCoursesProps {
+  enrolledCourses: Course[];
+  onCancelEnrollment: (courseId: string) => void;
+}
+
+/**
+ * EnrolledCourses 컴포넌트 - 수강신청한 과목 목록 표시 및 취소 기능 제공
+ * @param {EnrolledCoursesProps} props - EnrolledCourses 컴포넌트에 전달되는 props
+ * @returns {JSX.Element} 수강신청한 과목 목록 컴포넌트
+ */
+export default function EnrolledCourses({ enrolledCourses, onCancelEnrollment }: EnrolledCoursesProps) {
+
+  return (
+    <section>
+      {/* 수강 목록 헤더 */}
+      <div className={styles.coursesListHeader}>
+        <div>
+          <div className={styles.coursesListTitle}>수강 목록</div>
+          <div className={styles.coursesListSubtitle}>수강신청한 과목을 확인하고 취소할 수 있습니다.</div>
+        </div>
+      </div>
+
+      {/* 수강신청한 과목 테이블 */}
+      <div className={styles.coursesTable}>
+        <table className={styles.table}>
+          {/* 테이블 헤더 */}
+          <thead>
+            <tr>
+              <th>학년도</th>
+              <th>학기</th>
+              <th>강의명</th>
+              <th>강의코드</th>
+              <th>교수명</th>
+              <th>학점</th>
+              <th>교과목 수준</th>
+              <th>이수구분</th>
+              <th>시간표</th>
+              <th>정원</th>
+              <th>수강취소</th>
+            </tr>
+          </thead>
+          <tbody>
+            {enrolledCourses.length === 0 ? (
+              // 수강신청한 과목이 없을 때 표시되는 메시지
+              <tr>
+                <td colSpan={11} className={enrolledCoursesStyles.emptyMessage}>
+                  {ENROLLMENT_MESSAGES.NO_ENROLLED}
+                </td>
+              </tr>
+            ) : (
+              // 수강신청한 각 과목을 테이블 행으로 렌더링
+              enrolledCourses.map((c) => (
+                <tr key={c.courseId}>
+                  <td>{COURSE_DEFAULTS.ACADEMIC_YEAR}</td>
+                  <td>{COURSE_DEFAULTS.SEMESTER}</td>
+                  <td className={styles.courseTitle}>{c.title}</td>
+                  <td className={styles.courseId}>{c.courseId}</td>
+                  <td className={styles.courseProfessor}>{c.professor}</td>
+                  <td>{COURSE_DEFAULTS.DEFAULT_CREDITS}</td>
+                  <td>{COURSE_DEFAULTS.COURSE_LEVEL}</td>
+                  <td>{COURSE_DEFAULTS.COURSE_TYPE}</td>
+                  <td className={styles.courseSchedule}>{c.schedule}</td>
+                  <td className={styles.courseCapacity}>{c.enrolled}/{c.capacity}</td>
+                  <td>
+                    {/* 수강취소 버튼 */}
+                    <button
+                      onClick={() => onCancelEnrollment(c.courseId)}
+                      className={`${styles.buttonBase} ${styles.removeButton}`}
+                    >
+                      수강취소
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}

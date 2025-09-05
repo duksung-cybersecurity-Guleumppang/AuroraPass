@@ -34,11 +34,6 @@
     color: #0f172a;
 }
 
-.headerSubtitle {
-    color: #64748b;
-    font-size: 13px;
-}
-
 .headerActions {
     display: flex;
     gap: 10px;
@@ -60,12 +55,12 @@
 }
 
 .logoutButton {
-    background: #ef4444;
+    background: #331a14;
     color: #fff;
 }
 
 .enrollButton {
-    background: #2563eb;
+    background: #b70050;
     color: #fff;
 }
 
@@ -76,12 +71,96 @@
 
 /* 메인 콘텐츠 레이아웃 */
 .coursesContent {
-    display: grid;
-    grid-template-columns: 1fr 360px;
+    display: flex;
+    flex-direction: column;
     gap: 24px;
     padding: 24px;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+/* 검색 필터 박스 */
+.searchFilterBox {
+    background: #ffffff;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.filterRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.filterRow:last-child {
+    margin-bottom: 0;
+}
+
+.filterGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.filterGroup label {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.required {
+    color: #dc2626;
+}
+
+.filterSelect {
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.filterInput {
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.searchButton {
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.searchButton:hover {
+    background: #e5e7eb;
+}
+
+.radioGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: center;
+}
+
+.radioGroup input[type="radio"] {
+    margin-right: 4px;
+}
+
+.radioGroup label {
+    font-size: 14px;
+    cursor: pointer;
 }
 
 /* 강의 목록 섹션 */
@@ -102,58 +181,60 @@
     color: #64748b;
 }
 
-.coursesGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+/* 강의 테이블 */
+.coursesTable {
     margin-top: 16px;
-}
-
-/* 강의 카드 */
-.courseCard {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
+    overflow: hidden;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
-.courseCardContent {
-    padding: 14px;
+.table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-.courseCardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+.table th {
+    background: #f8fafc;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background: #f8fafc;
 }
 
 .courseTitle {
+    font-weight: 600;
     color: #0f172a;
 }
 
 .courseId {
-    font-size: 12px;
+    font-size: 13px;
     color: #64748b;
+    font-family: monospace;
 }
 
 .courseProfessor {
-    margin-top: 6px;
     font-size: 14px;
     color: #0f172a;
 }
 
 .courseSchedule {
-    margin-top: 4px;
     font-size: 13px;
     color: #64748b;
-}
-
-.courseCardFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    border-top: 1px dashed #e2e8f0;
 }
 
 .courseCapacity {
@@ -162,8 +243,8 @@
 }
 
 .addToCartButton {
-    background: #2563eb;
-    color: #fff;
+    background: #ffd61c;
+    color: #000;
 }
 
 .addToCartButton:disabled,
@@ -174,12 +255,16 @@
 
 /* 장바구니 사이드바 */
 .cartSidebar {
-    position: sticky;
-    top: 76px;
-    align-self: start;
+    width: 100%;
 }
 
-.cartContainer {
+/* 수강신청 완료 과목 사이드바 */
+.enrolledSidebar {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.cartContainer, .enrolledContainer {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
@@ -187,15 +272,19 @@
     padding: 14px;
 }
 
-.cartTitle {
+.cartTitle, .enrolledTitle {
     margin: 0;
     font-size: 16px;
     color: #0f172a;
 }
 
-.cartContent {
+.enrolledTitle {
+    color: #059669;
+}
+
+.cartContent, .enrolledContent {
     margin-top: 8px;
-    min-height: 180px;
+    min-height: 120px;
 }
 
 .cartEmpty {
@@ -207,8 +296,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 6px;
-    border-bottom: 1px dashed #e2e8f0;
+    padding: 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .cartItemTitle {
@@ -222,13 +314,13 @@
 }
 
 .removeButton {
-    background: #ef4444;
+    background: #1e40af;
     color: #fff;
 }
 
 .cartEnrollButton {
-    width: 100%;
-    margin-top: 8px;
+    width: 200px;
+    margin: 8px auto 0;
 }
 
 .message {
@@ -288,15 +380,21 @@
 .captchaSubmitButton {
     padding: 10px 14px;
     border-radius: 8px;
-    background: #2563eb;
+    border: none;
+    background: #b70050;
     color: #fff;
     font-weight: 600;
+    cursor: pointer;
 }
 
 .captchaRefreshButton {
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+    background: #ffd61c;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .captchaMessage {
@@ -314,4 +412,8 @@
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+    background: #331a14;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
 }

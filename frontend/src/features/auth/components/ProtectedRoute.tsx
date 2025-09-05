@@ -5,8 +5,8 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { ProtectedRouteProps } from './ProtectedRoute.types';
+import { useAuth } from '../../../contexts/AuthContext';
+import { ProtectedRouteProps } from '../../../shared/types/protectedRoute';
 import styles from './ProtectedRoute.module.css';
 
 /**
