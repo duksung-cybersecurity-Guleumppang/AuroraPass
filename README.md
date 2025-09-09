@@ -5,20 +5,24 @@
 ## 데이터베이스 구성
 
 ### **PostgreSQL 15** (관계형 데이터)
-- **6개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**
-- **현재 데이터**: 1명 사용자, 5개 강의, 3개 CAPTCHA 오디오 파일, 1건 수강신청
+- **8개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**, **audio_sources**, **ko_source_answers**
+- **현재 데이터**: 1명 사용자, 5개 강의, CAPTCHA 오디오 시스템(합성 지원), 1건 수강신청
 
 | 테이블 | 용도 | 레코드 수 |
 |---|---|---|
 | `users` | 사용자 정보 (UUID, username, email, password_hash) | 1 |
 | `courses` | 강의 정보 (id, title, capacity, enrolled_count) | 5 |
-| `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data) | 3 |
+| `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data, 합성 메타데이터) | 가변 |
+| `audio_sources` | **원본 오디오 소스** (한글/영어, bytea 저장) | 가변 |
+| `ko_source_answers` | **한글 소스 정답 매핑** (파일명 → 질문/정답) | 가변 |
 | `carts` | 사용자별 장바구니 | 1 |
 | `cart_items` | 장바구니 아이템 | 0 |
 | `enrollments` | 수강신청 내역 | 1 |
 
 ### 테이블별 역할 요약
-* captcha_files: CAPTCHA 오디오와 정답 저장. 컬럼: id(파일 ID), filename, answer, audio_data(bytea), content_type, created_at  
+* **captcha_files**: CAPTCHA 오디오와 정답 저장. 컬럼: id, filename, answer, audio_data(bytea), sample_rate, duration_ms, params(jsonb), pipeline_version, audio_hash, ko_source_id, en_source_id  
+* **audio_sources**: 원본 오디오 파일 저장. 컬럼: id, language('ko'|'en'), original_filename, audio_data(bytea), sample_rate, duration_ms, audio_hash  
+* **ko_source_answers**: 한글 소스 정답 매핑. 컬럼: ko_key(파일명), question, answer, ko_source_id  
 * users: 사용자 계정. 컬럼: id(UUID), username, email, password_hash, created_at  
 * courses: 강의 마스터. 컬럼: id, title, capacity, enrolled_count, updated_at  
 * carts: 사용자별 장바구니 컨테이너. 컬럼: id(UUID), user_id(UUID), created_at  
@@ -272,6 +276,52 @@ curl -X POST http://localhost:8000/api/enroll
 - **프론트엔드**: 페이지 어디서든 3초 내 5회 클릭 시 오디오 CAPTCHA 모달
 - **백엔드**: 동일 사용자 3초 내 5회 이상 API 요청 시 CAPTCHA 요구
 - **적용 경로**: `/api/courses`, `/api/cart`, `/api/enroll`, `/api/my-courses`
+
+## CAPTCHA 오디오 합성 시스템
+
+### 개요
+DB에 저장된 한글/영어 오디오 소스를 합성하여 동적으로 CAPTCHA를 생성하는 시스템이 추가되었습니다.
+
+### 주요 구성요소
+- **원본 오디오 관리**: `audio_sources` 테이블에 한글/영어 WAV 파일을 bytea로 저장
+- **정답 사전**: `ko_source_answers` 테이블에 파일명→정답 매핑 저장  
+- **합성 엔진**: librosa 기반 오디오 처리 (피치변경, 믹싱, 게인조정)
+- **결과 저장**: `captcha_files` 테이블에 합성 결과와 메타데이터 저장
+
+### 실행 순서
+```bash
+cd backend
+
+# 1. 의존성 설치
+uv add librosa numpy soundfile psycopg2-binary
+
+# 2. DB 마이그레이션
+uv run scripts/run_migration.py
+
+# 3. 정답 사전 로드 (static/real_answer.json 필요)
+uv run scripts/load_answers_to_db.py
+
+# 4. 원본 오디오 로드 (static/tts_men_ko/, static/foreign_women_eng/ 필요)
+uv run scripts/load_audio_to_db.py
+
+# 5. CAPTCHA 합성 (단일)
+uv run scripts/synthesize_captcha.py
+
+# 6. CAPTCHA 합성 (여러 개)
+uv run scripts/synthesize_captcha.py --count 10
+
+# 7. 결과 검증
+uv run scripts/synthesize_captcha.py --verify
+```
+
+### PoC 테스트
+```bash
+cd poc/captcha_synth
+uv run captcha_synth.py
+uv run test_captcha_synth.py
+```
+
+자세한 내용은 `backend/docs/audio_synthesis_guide.md`를 참조하세요.
 
 ## 로컬 개발 (옵션)
 

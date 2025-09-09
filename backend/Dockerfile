@@ -7,12 +7,20 @@ WORKDIR /app
 # 전역 UTF-8 로케일/IO 인코딩 고정
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONIOENCODING=UTF-8
 
+# 시스템 패키지 설치 (오디오 처리용)
+RUN apt-get update && apt-get install -y \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # requirements.txt를 복사하고 의존성을 설치합니다.
 COPY backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 프로젝트 소스 코드를 복사합니다.
 COPY backend/ /app/
+# PoC 코드도 복사합니다.
+COPY poc/ /app/poc/
 
 # 애플리케이션 포트를 환경변수 PORT로 노출합니다. 기본값은 런타임에서 결정됩니다.
 ARG PORT

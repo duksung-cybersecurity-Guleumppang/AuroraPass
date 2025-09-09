@@ -41,10 +41,12 @@ services:
       - "${BACKEND_PORT:-${PORT:-8000}}:${BACKEND_PORT:-${PORT:-8000}}"
     volumes:
       - ./backend:/app
+      - ./poc:/app/poc
     env_file:
       - ./.env
     environment:
       - PORT=${BACKEND_PORT:-${PORT:-8000}}
+      - PYTHONPATH=/app
     depends_on:
       postgres:
         condition: service_healthy
