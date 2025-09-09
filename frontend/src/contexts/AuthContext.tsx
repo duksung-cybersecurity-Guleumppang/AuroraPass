@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AuthContextType, AuthProviderProps } from './AuthContext.types';
+import { AuthContextType, AuthProviderProps } from '../shared/types/auth';
 
 // 인증 컨텍스트 생성
 const AuthContext = createContext<AuthContextType | null>(null);

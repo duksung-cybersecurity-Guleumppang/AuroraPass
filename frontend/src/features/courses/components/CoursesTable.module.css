@@ -1,0 +1,22 @@
+/**
+ * CoursesTable 컴포넌트 전용 스타일
+ */
+
+/* 테이블 헤더 스타일 */
+.tableHeader {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+/* 수강신청 버튼 스타일 */
+.enrollButton {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+}
+
+.enrollButtonDisabled {
+  background: #cbd5e1;
+}

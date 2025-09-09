@@ -1,0 +1,36 @@
+/**
+ * CSS 변수 정의
+ * 애플리케이션 전체에서 사용하는 색상, 간격, 크기 등을 정의합니다.
+ */
+
+:root {
+  /* 색상 팔레트 */
+  --color-bg: #f6f8fb;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
+  --color-sub-text: #64748b;
+  --color-border: #e2e8f0;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  
+  /* 간격 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  
+  /* 버튼 스타일 */
+  --button-padding: 10px 14px;
+  --button-border-radius: 10px;
+  --button-border: 1px solid transparent;
+  --button-font-weight: 600;
+  
+  /* 폰트 크기 */
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+}
