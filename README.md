@@ -329,6 +329,36 @@ docker exec aurorapass-backend-1 python scripts/synthesize_captcha.py --count 50
 docker exec aurorapass-backend-1 python scripts/bootstrap.py
 ```
 
+### DB 디버깅/모니터링/SQL 실행
+```bash
+# 상세 디버깅 (전체)
+docker exec aurorapass-backend-1 python scripts/debug_db.py
+
+# 상세 디버깅 (섹션별)
+docker exec aurorapass-backend-1 python scripts/debug_db.py schema
+docker exec aurorapass-backend-1 python scripts/debug_db.py captcha
+docker exec aurorapass-backend-1 python scripts/debug_db.py audio
+docker exec aurorapass-backend-1 python scripts/debug_db.py answers
+docker exec aurorapass-backend-1 python scripts/debug_db.py redis
+docker exec aurorapass-backend-1 python scripts/debug_db.py activity
+docker exec aurorapass-backend-1 python scripts/debug_db.py integrity
+
+# 실시간 모니터링 (기본 10초 간격)
+docker exec -it aurorapass-backend-1 python scripts/monitor_db.py
+# 5초 간격
+docker exec -it aurorapass-backend-1 python scripts/monitor_db.py 5
+
+# SQL 실행기 (대화형)
+docker exec -it aurorapass-backend-1 python scripts/sql_runner.py
+
+# SQL 한 번에 실행
+docker exec aurorapass-backend-1 python scripts/sql_runner.py "SELECT COUNT(*) FROM captcha_files"
+
+# Redis 정답 키 확인
+docker exec aurora_redis redis-cli --scan --pattern 'captcha:*'
+docker exec aurora_redis redis-cli TTL captcha:<captchaId>
+```
+
 ### 합성 규칙
 - **파일명**: `ko_{koKey}__{enStem}_mix_{YYYYMMDD_HHMMSS}.wav`
 - **중복 방지**: `audio_hash` 기반 ON CONFLICT DO NOTHING

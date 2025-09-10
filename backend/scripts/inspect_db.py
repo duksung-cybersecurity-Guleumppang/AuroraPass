@@ -201,7 +201,7 @@ def inspect_system_health():
                   AND (ko_source_id IS NOT NULL OR en_source_id IS NOT NULL)
             """)).fetchone()
             
-            print(f"\n🔧 합성 상태 (최근 24시간):")
+            print(f"\n 합성 상태 (최근 24시간):")
             if synthesis_stats.recent_synthesis > 0:
                 success_rate = (synthesis_stats.successful_synthesis / synthesis_stats.recent_synthesis) * 100
                 print(f"   - 합성 시도: {synthesis_stats.recent_synthesis:,}")
