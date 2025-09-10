@@ -334,6 +334,9 @@ docker exec aurorapass-backend-1 python scripts/bootstrap.py
 # 상세 디버깅 (전체)
 docker exec aurorapass-backend-1 python scripts/debug_db.py
 
+# 재고 상태 빠르게 확인
+docker exec aurorapass-backend-1 python scripts/inspect_db.py
+
 # 상세 디버깅 (섹션별)
 docker exec aurorapass-backend-1 python scripts/debug_db.py schema
 docker exec aurorapass-backend-1 python scripts/debug_db.py captcha

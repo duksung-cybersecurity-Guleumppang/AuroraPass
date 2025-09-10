@@ -5,17 +5,20 @@ DB 실시간 모니터링 스크립트
 """
 import time
 import os
+import sys
 from datetime import datetime
 from db.session import get_db_session
 from sqlalchemy import text
 
 def clear_screen():
     """화면 지우기"""
-    os.system('cls' if os.name == 'nt' else 'clear')
+    # TTY가 아닐 때는 화면 클리어 생략 (비대화형 출력 가독성 개선)
+    if sys.stdout.isatty():
+        os.system('cls' if os.name == 'nt' else 'clear')
 
 def get_current_stats():
     """현재 상태 통계 조회"""
-    try:
+    try: 
         with get_db_session() as session:
             # CAPTCHA 파일 통계
             captcha_stats = session.execute(text("""
@@ -121,7 +124,7 @@ def display_stats(stats, previous_stats=None):
         print(f"   사용가능: {available_change:+,}")
         print(f"   사용됨: {used_change:+,}")
     
-    print(f"\n🎵 오디오 소스:")
+    print(f"\n 오디오 소스:")
     print(f"   한글: {stats['ko_sources']:,}개")
     print(f"   영어: {stats['en_sources']:,}개")
     
@@ -149,6 +152,7 @@ def display_stats(stats, previous_stats=None):
 def monitor_loop(refresh_interval=10):
     """모니터링 루프 실행"""
     previous_stats = None
+    interactive = sys.stdout.isatty()
     
     try:
         while True:
@@ -156,29 +160,23 @@ def monitor_loop(refresh_interval=10):
             display_stats(current_stats, previous_stats)
             previous_stats = current_stats
             
-            # 새로고침 대기 (Enter 키로 즉시 새로고침 가능)
-            import select
-            import sys
-            
-            print(f"다음 새로고침까지 {refresh_interval}초... (Enter: 즉시 새로고침)")
-            
-            for i in range(refresh_interval):
-                # 논블로킹 입력 체크 (Unix/Linux/macOS만)
-                if hasattr(select, 'select'):
+            if not interactive:
+                # 비대화형 모드: 지정 간격만큼 대기 후 다음 반복 (기본 10초)
+                time.sleep(refresh_interval)
+                continue
+            else:
+                # 대화형 모드: Enter로 즉시 새로고침 지원
+                import select
+                print(f"다음 새로고침까지 {refresh_interval}초... (Enter: 즉시 새로고침)")
+                for i in range(refresh_interval):
                     ready, _, _ = select.select([sys.stdin], [], [], 1)
                     if ready:
                         sys.stdin.readline()  # Enter 키 소비
                         break
-                else:
-                    # Windows에서는 단순 대기
-                    time.sleep(1)
-                
-                if i < refresh_interval - 1:
-                    # 진행률 표시 업데이트
-                    remaining = refresh_interval - i - 1
-                    print(f"\r다음 새로고침까지 {remaining}초...    ", end='', flush=True)
-            
-            print()  # 줄바꿈
+                    if i < refresh_interval - 1:
+                        remaining = refresh_interval - i - 1
+                        print(f"\r다음 새로고침까지 {remaining}초...    ", end='', flush=True)
+                print()
             
     except KeyboardInterrupt:
         print(f"\n\n모니터링을 종료합니다.")
@@ -202,7 +200,7 @@ def main():
             return
     
     print(f"DB 실시간 모니터링을 시작합니다... (새로고침: {refresh_interval}초)")
-    time.sleep(1)
+    time.sleep(10)
     
     monitor_loop(refresh_interval)
 
