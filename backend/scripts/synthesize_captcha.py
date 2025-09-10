@@ -10,8 +10,8 @@ from pathlib import Path
 from db.session import get_db_session
 from sqlalchemy import text
 
-# PoC 모듈 임포트를 위한 경로 추가
-poc_path = Path(__file__).parent.parent.parent / "poc" / "captcha_synth"
+# PoC 모듈 임포트를 위한 경로 추가 (/app 기준으로 계산)
+poc_path = Path(__file__).parent.parent / "poc" / "captcha_synth"
 sys.path.insert(0, str(poc_path))
 
 try:

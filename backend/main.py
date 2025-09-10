@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from utils.responses import UTF8JSONResponse
 from fastapi.staticfiles import StaticFiles
 from api import captcha_api, user_api, courses_api
 import os
@@ -17,6 +18,7 @@ app = FastAPI(
     title="Rainbowwings Course Registration API",
     description="캡차가 적용된 수강신청 시스템의 API 명세서",
     version="1.0.0",
+    default_response_class=UTF8JSONResponse,
 )
 
 # API 라우터 등록

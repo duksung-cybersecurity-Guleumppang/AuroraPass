@@ -29,7 +29,7 @@ class TopUpScheduler:
         
         # 합성 모듈 임포트
         try:
-            poc_path = Path(__file__).parent.parent.parent / "poc" / "captcha_synth"
+            poc_path = Path(__file__).parent.parent / "poc" / "captcha_synth"
             sys.path.insert(0, str(poc_path))
             
             scripts_path = Path(__file__).parent.parent / "scripts"

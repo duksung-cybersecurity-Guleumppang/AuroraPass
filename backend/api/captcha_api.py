@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
+from utils.responses import UTF8JSONResponse
 from models.captcha_models import CaptchaGenerateResponse, CaptchaVerifyRequest, CaptchaVerifyResponse
 from services.captcha_service import captcha_service
 from db.captcha_repository import captcha_repository
@@ -24,7 +25,9 @@ async def generate_captcha():
     """
     try:
         captcha_id, audio_path = captcha_service.create_captcha()
-        return CaptchaGenerateResponse(captchaId=captcha_id, audioPath=audio_path)
+        # 명시적 UTF-8 설정 및 ensure_ascii=False 적용
+        payload = CaptchaGenerateResponse(captchaId=captcha_id, audioPath=audio_path).model_dump(by_alias=True)
+        return UTF8JSONResponse(content=payload)
     except Exception as e:
         print(f"Error generating CAPTCHA: {e}")
         raise HTTPException(status_code=500, detail="CAPTCHA 생성에 실패했습니다.")
@@ -45,9 +48,11 @@ async def verify_captcha(request: CaptchaVerifyRequest):
     try:
         is_valid = captcha_service.verify_captcha(request.captcha_id, request.user_input)
         if is_valid:
-            return CaptchaVerifyResponse(success=True, message="CAPTCHA 인증에 성공했습니다.")
+            payload = CaptchaVerifyResponse(success=True, message="CAPTCHA 인증에 성공했습니다.").model_dump()
+            return UTF8JSONResponse(content=payload)
         else:
-            return CaptchaVerifyResponse(success=False, message="CAPTCHA 인증에 실패했습니다.")
+            payload = CaptchaVerifyResponse(success=False, message="CAPTCHA 인증에 실패했습니다.").model_dump()
+            return UTF8JSONResponse(content=payload)
     except Exception as e:
         print(f"Error verifying CAPTCHA: {e}")
         raise HTTPException(status_code=500, detail="CAPTCHA 검증에 실패했습니다.")
