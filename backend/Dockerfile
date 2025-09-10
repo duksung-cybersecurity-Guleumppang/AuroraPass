@@ -28,4 +28,4 @@ ENV PORT=${PORT}
 EXPOSE ${PORT}
 
 # 애플리케이션을 실행합니다.
-CMD ["sh", "-lc", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-lc", "python scripts/bootstrap.py && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

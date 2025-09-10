@@ -280,48 +280,60 @@ curl -X POST http://localhost:8000/api/enroll
 ## CAPTCHA 오디오 합성 시스템
 
 ### 개요
-DB에 저장된 한글/영어 오디오 소스를 합성하여 동적으로 CAPTCHA를 생성하는 시스템이 추가되었습니다.
+DB에 저장된 한글/영어 오디오 소스를 합성하여 동적으로 CAPTCHA를 생성하는 자동화 시스템입니다.
 
 ### 주요 구성요소
 - **원본 오디오 관리**: `audio_sources` 테이블에 한글/영어 WAV 파일을 bytea로 저장
 - **정답 사전**: `ko_source_answers` 테이블에 파일명→정답 매핑 저장  
 - **합성 엔진**: librosa 기반 오디오 처리 (피치변경, 믹싱, 게인조정)
-- **결과 저장**: `captcha_files` 테이블에 합성 결과와 메타데이터 저장
+- **원자적 소비**: `used` 플래그로 중복 사용 방지
+- **자동 보충**: Top-up 스케줄러가 재고를 자동으로 유지
 
-### 실행 순서
+### 자동 합성 시스템
+도커 시작 시 자동으로 다음이 실행됩니다:
+
+1. **부팅 초기화** (`backend/scripts/bootstrap.py`)
+   - DB 마이그레이션 전체 실행
+   - 초기 CAPTCHA 시드 (static/audio 10개)
+   - 정답 사전 UPSERT (static/real_answer.json)
+   - 원본 오디오 UPSERT (tts_men_ko/, foreign_women_eng/)
+   - 백그라운드 사전 합성 3개
+   - Top-up 스케줄러 시작
+
+2. **Top-up 스케줄러** (`backend/services/topup_scheduler.py`)
+   - 60초 간격으로 재고 확인
+   - 목표 재고(기본 1000개) 미달 시 자동 합성
+   - 한글 오디오: 최근 30일 저사용 우선 + 랜덤
+   - 영어 오디오: 무제한 랜덤 재사용
+
+### 환경 변수 설정
+`.env` 파일에 다음 변수들을 설정할 수 있습니다:
+
 ```bash
-cd backend
-
-# 1. 의존성 설치
-uv add librosa numpy soundfile psycopg2-binary
-
-# 2. DB 마이그레이션
-uv run scripts/run_migration.py
-
-# 3. 정답 사전 로드 (static/real_answer.json 필요)
-uv run scripts/load_answers_to_db.py
-
-# 4. 원본 오디오 로드 (static/tts_men_ko/, static/foreign_women_eng/ 필요)
-uv run scripts/load_audio_to_db.py
-
-# 5. CAPTCHA 합성 (단일)
-uv run scripts/synthesize_captcha.py
-
-# 6. CAPTCHA 합성 (여러 개)
-uv run scripts/synthesize_captcha.py --count 10
-
-# 7. 결과 검증
-uv run scripts/synthesize_captcha.py --verify
+# CAPTCHA Top-up Scheduler Settings
+INVENTORY_TARGET=1000        # 목표 재고 수량
+TOP_UP_INTERVAL_SEC=60       # 점검 주기 (초)
+MAX_PER_TICK=200            # 틱당 최대 합성 수량
+BATCH_SIZE=50               # 배치 크기
 ```
 
-### PoC 테스트
+### 수동 관리 명령어
 ```bash
-cd poc/captcha_synth
-uv run captcha_synth.py
-uv run test_captcha_synth.py
+# DB 상태 점검
+docker exec aurorapass-backend-1 python scripts/inspect_db.py
+
+# 수동 합성 (필요시)
+docker exec aurorapass-backend-1 python scripts/synthesize_captcha.py --count 50
+
+# 마이그레이션 수동 실행
+docker exec aurorapass-backend-1 python scripts/bootstrap.py
 ```
 
-자세한 내용은 `backend/docs/audio_synthesis_guide.md`를 참조하세요.
+### 합성 규칙
+- **파일명**: `ko_{koKey}__{enStem}_mix_{YYYYMMDD_HHMMSS}.wav`
+- **중복 방지**: `audio_hash` 기반 ON CONFLICT DO NOTHING
+- **원자적 소비**: FOR UPDATE SKIP LOCKED로 동시성 보장
+- **만료 지원**: `expires_at` 컬럼으로 시한부 CAPTCHA 지원
 
 ## 로컬 개발 (옵션)
 
