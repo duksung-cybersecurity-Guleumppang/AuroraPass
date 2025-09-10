@@ -8,6 +8,7 @@ from sqlalchemy.exc import ProgrammingError
 from pathlib import Path
 from db.redis_client import ping_redis
 from utils.logging import configure_logging, get_logger
+from services.topup_scheduler import start_topup_scheduler
 
 # Configure structured logging
 configure_logging()
@@ -148,3 +149,13 @@ def ensure_captcha_table_and_seed():
                 logger.info("Demo user created")
     except Exception as e:
         logger.error("Failed to ensure/seed captcha_files and demo user", error=str(e))
+
+
+@app.on_event("startup")
+def start_background_topup_scheduler():
+    """API 프로세스에서 Top-up 스케줄러를 시작한다(부팅 스크립트 종료 후에도 지속)."""
+    try:
+        start_topup_scheduler()
+        logger.info("Background Top-up scheduler started from API process")
+    except Exception as e:
+        logger.error("Failed to start Top-up scheduler from API process", error=str(e))

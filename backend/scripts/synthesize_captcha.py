@@ -4,6 +4,7 @@ CAPTCHA 오디오 합성 스크립트
 DB에서 한글/영어 오디오를 랜덤 선택하여 합성하고 captcha_files에 저장
 """
 import sys
+import json
 import time
 import uuid
 from pathlib import Path
@@ -76,7 +77,7 @@ def save_synthesized_captcha(
     en_source_id: int,
     ko_filename: str,
     en_filename: str
-) -> str:
+) -> tuple[str, bool]:
     """합성된 CAPTCHA를 DB에 저장합니다."""
     captcha_id = str(uuid.uuid4())
     
@@ -87,49 +88,42 @@ def save_synthesized_captcha(
     filename = f"ko_{ko_key}__{en_stem}_mix_{timestamp}.wav"
     
     with get_db_session() as session:
-        try:
-            session.execute(text("""
-                INSERT INTO captcha_files (
-                    id, filename, answer, audio_data, content_type,
-                    sample_rate, duration_ms, n_samples, params, 
-                    pipeline_version, audio_hash, ko_source_id, en_source_id, used
-                ) VALUES (
-                    :id, :filename, :answer, :audio_data, :content_type,
-                    :sample_rate, :duration_ms, :n_samples, :params,
-                    :pipeline_version, :audio_hash, :ko_source_id, :en_source_id, false
-                )
-                ON CONFLICT (audio_hash) DO NOTHING
-            """), {
-                'id': captcha_id,
-                'filename': filename,
-                'answer': answer,
-                'audio_data': audio_data,
-                'content_type': 'audio/wav',
-                'sample_rate': metadata['sample_rate'],
-                'duration_ms': metadata['duration_ms'],
-                'n_samples': metadata['n_samples'],
-                'params': metadata['params'],
-                'pipeline_version': metadata['pipeline_version'],
-                'audio_hash': metadata['audio_hash'],
-                'ko_source_id': ko_source_id,
-                'en_source_id': en_source_id
-            })
-            
+        # INSERT 시도 후, 실제로 삽입되었는지 확인하기 위해 RETURNING 사용
+        result = session.execute(text("""
+            INSERT INTO captcha_files (
+                id, filename, answer, audio_data, content_type,
+                sample_rate, duration_ms, n_samples, params, 
+                pipeline_version, audio_hash, ko_source_id, en_source_id, used
+            ) VALUES (
+                :id, :filename, :answer, :audio_data, :content_type,
+                :sample_rate, :duration_ms, :n_samples, CAST(:params_json AS jsonb),
+                :pipeline_version, :audio_hash, :ko_source_id, :en_source_id, false
+            )
+            ON CONFLICT (audio_hash) DO NOTHING
+            RETURNING id
+        """), {
+            'id': captcha_id,
+            'filename': filename,
+            'answer': answer,
+            'audio_data': audio_data,
+            'content_type': 'audio/wav',
+            'sample_rate': metadata['sample_rate'],
+            'duration_ms': metadata['duration_ms'],
+            'n_samples': metadata['n_samples'],
+            'params_json': json.dumps(metadata['params'], ensure_ascii=False),
+            'pipeline_version': metadata['pipeline_version'],
+            'audio_hash': metadata['audio_hash'],
+            'ko_source_id': ko_source_id,
+            'en_source_id': en_source_id
+        }).fetchone()
+
+        if result and result.id:
             session.commit()
-            return captcha_id
-            
-        except Exception as e:
+            return result.id, True
+        else:
+            # 충돌(동일 해시로 기존 행 존재)인 경우
             session.rollback()
-            # 해시 충돌 시 기존 ID 반환
-            existing = session.execute(text("""
-                SELECT id FROM captcha_files WHERE audio_hash = :audio_hash
-            """), {"audio_hash": metadata['audio_hash']}).fetchone()
-            
-            if existing:
-                print(f"  중복 오디오 해시, 기존 ID 반환: {existing.id}")
-                return existing.id
-            else:
-                raise e
+            return captcha_id, False
 
 def synthesize_single_captcha() -> bool:
     """단일 CAPTCHA를 합성하여 DB에 저장합니다."""
@@ -155,39 +149,50 @@ def synthesize_single_captcha() -> bool:
     if question:
         print(f"   질문: {question}")
     
-    # 3. 영어 오디오 랜덤 선택
-    print(" 영어 오디오 소스 선택 중...")
-    en_id, en_filename, en_audio_data = get_random_audio_source("en")
-    if not en_id:
-        print(" 영어 오디오 소스를 찾을 수 없습니다.")
-        return False
+    # 3~5. EN 선택→합성→저장 (해시 충돌 시 EN 재선택 후 재시도)
+    max_retries = 5
+    attempt = 0
+    used_en_ids = set()
     
-    print(f" 영어 소스: {en_filename} (ID: {en_id})")
-    
-    # 4. 오디오 합성
-    print(" 오디오 합성 중...")
-    try:
-        synthesized_audio, metadata = synthesize_captcha_audio(ko_audio_data, en_audio_data)
-        print(f" 합성 완료:")
-        print(f"   - 크기: {len(synthesized_audio):,} bytes")
-        print(f"   - 지속시간: {metadata['duration_ms']}ms")
-        print(f"   - 샘플 수: {metadata['n_samples']:,}")
-        print(f"   - 해시: {metadata['audio_hash'][:16]}...")
-    except Exception as e:
-        print(f" 오디오 합성 실패: {e}")
-        return False
-    
-    # 5. DB에 저장
-    print(" DB에 저장 중...")
-    try:
-        captcha_id = save_synthesized_captcha(
+    while attempt < max_retries:
+        attempt += 1
+        print(f" 영어 오디오 소스 선택 중... (시도 {attempt}/{max_retries})")
+        en_id, en_filename, en_audio_data = get_random_audio_source("en")
+        if not en_id:
+            print(" 영어 오디오 소스를 찾을 수 없습니다.")
+            return False
+        if en_id in used_en_ids:
+            continue
+        used_en_ids.add(en_id)
+
+        print(f" 영어 소스: {en_filename} (ID: {en_id})")
+
+        # 합성
+        print(" 오디오 합성 중...")
+        try:
+            synthesized_audio, metadata = synthesize_captcha_audio(ko_audio_data, en_audio_data)
+            print(f" 합성 완료:")
+            print(f"   - 크기: {len(synthesized_audio):,} bytes")
+            print(f"   - 지속시간: {metadata['duration_ms']}ms")
+            print(f"   - 샘플 수: {metadata['n_samples']:,}")
+            print(f"   - 해시: {metadata['audio_hash'][:16]}...")
+        except Exception as e:
+            print(f" 오디오 합성 실패: {e}")
+            return False
+
+        # 저장 (충돌 시 재시도)
+        print(" DB에 저장 중...")
+        captcha_id, inserted = save_synthesized_captcha(
             synthesized_audio, answer, metadata, ko_id, en_id, ko_filename, en_filename
         )
-        print(f" 저장 완료: CAPTCHA ID = {captcha_id}")
-        return True
-    except Exception as e:
-        print(f" DB 저장 실패: {e}")
-        return False
+        if inserted:
+            print(f" 저장 완료: CAPTCHA ID = {captcha_id}")
+            return True
+        else:
+            print(" 해시 충돌로 인해 다른 EN 소스로 재시도합니다.")
+
+    print(" 최대 재시도 횟수를 초과하여 합성/저장에 실패했습니다.")
+    return False
 
 def synthesize_multiple_captchas(count: int) -> int:
     """여러 개의 CAPTCHA를 합성합니다."""

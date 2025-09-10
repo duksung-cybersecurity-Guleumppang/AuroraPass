@@ -15,6 +15,7 @@ from utils.logging import get_logger
 logger = get_logger("topup_scheduler")
 
 # 환경 변수 설정
+# 기본값(환경변수 미설정 시 사용). 주기/목표는 런타임에 매 사이클마다 재읽기함
 INVENTORY_TARGET = int(os.getenv("INVENTORY_TARGET", "1000"))
 TOP_UP_INTERVAL_SEC = int(os.getenv("TOP_UP_INTERVAL_SEC", "60"))
 MAX_PER_TICK = int(os.getenv("MAX_PER_TICK", "200"))
@@ -37,10 +38,11 @@ class TopUpScheduler:
             
             from synthesize_captcha import synthesize_single_captcha
             self.synthesize_single_captcha = synthesize_single_captcha
-            logger.info("Top-up scheduler initialized", 
-                       target=INVENTORY_TARGET, 
-                       interval=TOP_UP_INTERVAL_SEC,
-                       max_per_tick=MAX_PER_TICK)
+            # 환경변수 현재값을 로그에 기록 (가시성)
+            logger.info("Top-up scheduler initialized",
+                        target=int(os.getenv("INVENTORY_TARGET", str(INVENTORY_TARGET))),
+                        interval=int(os.getenv("TOP_UP_INTERVAL_SEC", str(TOP_UP_INTERVAL_SEC))),
+                        max_per_tick=int(os.getenv("MAX_PER_TICK", str(MAX_PER_TICK))))
         except ImportError as e:
             logger.error("Failed to import synthesis modules", error=str(e))
             self.synthesize_single_captcha = None
@@ -62,8 +64,13 @@ class TopUpScheduler:
     def calculate_needed(self) -> int:
         """필요한 보충 수량 계산"""
         available = self.get_available_inventory()
-        needed = max(0, INVENTORY_TARGET - available)
-        return min(needed, MAX_PER_TICK)  # 한 틱당 최대치 제한
+        # 매 사이클마다 최신 환경변수 재적용
+        target = int(os.getenv("INVENTORY_TARGET", str(INVENTORY_TARGET)))
+        per_tick = int(os.getenv("MAX_PER_TICK", str(MAX_PER_TICK)))
+        needed = max(0, target - available)
+        needed = min(needed, per_tick)
+        logger.info("Top-up needed calculation", available=available, target=target, needed=needed)
+        return needed
     
     def run_synthesis_batch(self, count: int) -> int:
         """배치 단위로 합성 실행"""
@@ -72,6 +79,7 @@ class TopUpScheduler:
             return 0
         
         success_count = 0
+        attempted = 0
         batches = (count + BATCH_SIZE - 1) // BATCH_SIZE  # 올림 나눗셈
         
         for batch_num in range(batches):
@@ -86,6 +94,7 @@ class TopUpScheduler:
             batch_success = 0
             for i in range(batch_size):
                 try:
+                    attempted += 1
                     if self.synthesize_single_captcha():
                         batch_success += 1
                         success_count += 1
@@ -103,6 +112,7 @@ class TopUpScheduler:
             if batch_num < batches - 1:
                 time.sleep(1)
         
+        logger.info("Synthesis batch summary", requested=count, attempted=attempted, inserted=success_count)
         return success_count
     
     def run_topup_cycle(self):
@@ -114,12 +124,12 @@ class TopUpScheduler:
             if needed <= 0:
                 logger.debug("Inventory sufficient", 
                            available=available, 
-                           target=INVENTORY_TARGET)
+                           target=int(os.getenv("INVENTORY_TARGET", str(INVENTORY_TARGET))))
                 return
             
             logger.info("Starting top-up cycle", 
                        available=available, 
-                       target=INVENTORY_TARGET, 
+                       target=int(os.getenv("INVENTORY_TARGET", str(INVENTORY_TARGET))), 
                        needed=needed)
             
             start_time = time.time()
@@ -153,8 +163,9 @@ class TopUpScheduler:
             except Exception as e:
                 logger.error("Scheduler loop error", error=str(e))
             
-            # 다음 사이클까지 대기
-            time.sleep(TOP_UP_INTERVAL_SEC)
+            # 다음 사이클까지 대기 (런타임에 최신 주기 반영)
+            interval = int(os.getenv("TOP_UP_INTERVAL_SEC", str(TOP_UP_INTERVAL_SEC)))
+            time.sleep(interval)
         
         logger.info("Top-up scheduler stopped")
     

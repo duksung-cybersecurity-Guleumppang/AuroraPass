@@ -9,6 +9,7 @@ import math
 import numpy as np
 import soundfile as sf
 import librosa
+import random
 
 # ===================== 파라미터 =====================
 SR = 16000
@@ -20,7 +21,8 @@ KOREAN_GAIN = 1.0
 APPLY_PITCH_SHIFT = True
 TRIM_SILENCE = True
 TRIM_TOP_DB = 30
-FIT_METHOD = "loop"
+# 길이 맞춤 방식: 이전 loop(반복) → pad(무음 패딩)으로 변경해 문장 반복을 방지
+FIT_METHOD = "pad"
 SEED = None
 PIPELINE_VERSION = "v1"
 
@@ -107,6 +109,18 @@ def synthesize_captcha_audio(ko_audio_bytes: bytes, en_audio_bytes: bytes) -> tu
     Returns:
         tuple: (합성된 오디오 바이트, 메타데이터 딕셔너리)
     """
+    # 랜덤화 시드 설정 (요청 시 고정 가능)
+    if SEED is not None:
+        random.seed(SEED)
+        np.random.seed(SEED)
+
+    # 호출별 소폭 랜덤화 파라미터 생성 (해시 충돌 감소 목적)
+    pitch_steps_runtime = float(PITCH_SHIFT_STEPS + np.random.uniform(-0.3, 0.3))
+    silence_runtime = float(max(0.0, SILENCE_DURATION + np.random.uniform(-0.2, 0.2)))
+    gain_runtime = float(GAIN * (1.0 + np.random.uniform(-0.1, 0.1)))
+    foreign_gain_runtime = float(FOREIGN_GAIN * (1.0 + np.random.uniform(-0.1, 0.1)))
+    korean_gain_runtime = float(KOREAN_GAIN * (1.0 + np.random.uniform(-0.1, 0.1)))
+
     # 오디오 로드
     ko_audio = load_audio_from_bytes(ko_audio_bytes, SR)
     en_audio = load_audio_from_bytes(en_audio_bytes, SR)
@@ -124,30 +138,40 @@ def synthesize_captcha_audio(ko_audio_bytes: bytes, en_audio_bytes: bytes) -> tu
     # 3. 피치 변경 (옵션)
     if APPLY_PITCH_SHIFT:
         try:
-            en_audio = librosa.effects.pitch_shift(en_audio, sr=SR, n_steps=PITCH_SHIFT_STEPS)
+            en_audio = librosa.effects.pitch_shift(en_audio, sr=SR, n_steps=pitch_steps_runtime)
         except Exception as e:
             print(f"  피치 변경 실패: {e}")
     
     # 4. 게인 적용
-    ko_audio = ko_audio * KOREAN_GAIN
-    en_audio = en_audio * FOREIGN_GAIN
+    ko_audio = ko_audio * korean_gain_runtime
+    en_audio = en_audio * foreign_gain_runtime
     
     # 5. 믹싱
-    mixed_audio = safe_mix(ko_audio, en_audio, GAIN)
+    mixed_audio = safe_mix(ko_audio, en_audio, gain_runtime)
     
     # 6. 앞에 무음 추가
-    final_audio = prepend_silence(mixed_audio, SR, SILENCE_DURATION)
+    final_audio = prepend_silence(mixed_audio, SR, silence_runtime)
     
     # 7. 바이트로 변환
     result_bytes = save_audio_to_bytes(final_audio, SR)
     
     # 8. 메타데이터 생성
+    # 파라미터 스냅샷 + 런타임 변동치 기록
+    params = params_snapshot()
+    params.update({
+        "runtime_pitch_shift_steps": pitch_steps_runtime,
+        "runtime_silence_duration": silence_runtime,
+        "runtime_gain": gain_runtime,
+        "runtime_foreign_gain": foreign_gain_runtime,
+        "runtime_korean_gain": korean_gain_runtime,
+    })
+
     metadata = {
         'sample_rate': SR,
         'duration_ms': int(len(final_audio) / SR * 1000),
         'n_samples': len(final_audio),
         'audio_hash': sha256_bytes(result_bytes),
-        'params': params_snapshot(),
+        'params': params,
         'pipeline_version': PIPELINE_VERSION
     }
     
