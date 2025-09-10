@@ -1,7 +1,12 @@
 {
-  "sample1.wav": "apple",
-  "sample2.wav": "banana",
-  "sample3.wav": "cherry"
+  "47.wav": "취약점",
+  "50.wav": "청각",
+  "52.wav": "칠판",
+  "53.wav": "골목길",
+  "54.wav": "세탁기",
+  "55.wav": "발목",
+  "56.wav": "박물관",
+  "57.wav": "목욕탕",
+  "60.wav": "낙하산",
+  "65.wav": "국밥"
 }
-
-
