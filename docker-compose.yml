@@ -33,64 +33,67 @@ services:
       retries: 20
     networks: [ app-net ]
 
+  migrator:
+    image: postgres:15
+    env_file:
+      - ./.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "[migrator] ensuring minimal schema..."
+        export PGPASSWORD="$POSTGRES_PASSWORD"
+        # DB 준비까지 대기 (DB도 명시)
+        until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done
+        # 한 줄씩 -c로 실행 (윈도우/인용 이슈 회피)
+        psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS used boolean NOT NULL DEFAULT false;"
+        psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS expires_at timestamptz;"
+        psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c "CREATE UNIQUE INDEX IF NOT EXISTS uq_captcha_files_audio_hash ON captcha_files (audio_hash);"
+        echo "[migrator] done."
+    restart: "no"
+    networks: [ app-net ]
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "${BACKEND_PORT:-${PORT:-8000}}:${BACKEND_PORT:-${PORT:-8000}}"
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
     volumes:
       - ./backend:/app
       - ./poc:/app/poc
     env_file:
       - ./.env
     environment:
-      - PORT=${BACKEND_PORT:-${PORT:-8000}}
+      - PORT=${BACKEND_PORT:-8000}
       - PYTHONPATH=/app
-            - TOPUP_ENABLED=${TOPUP_ENABLED:-0}
+      - TOPUP_ENABLED=${TOPUP_ENABLED:-0}
     depends_on:
+      migrator:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-         depends_on:
-      migrator:
-       condition: service_completed_successfully
-     postgres:
-       condition: service_healthy
-     redis:
-       condition: service_healthy
     networks: [ app-net ]
-
-  migrator:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    env_file:
-      - ./.env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: >
-      sh -lc '
-      set -e
-      echo "[migrator] running alembic upgrade head...";
-      alembic upgrade head || python -m alembic upgrade head
-      '
-    restart: "no"
-    networks: [ app-net ]
-
 
   frontend:
     build: ./frontend
     ports:
-      - "${FRONT_PORT:-${PORT:-3000}}:${FRONT_PORT:-${PORT:-3000}}"
+      - "${FRONT_PORT:-3000}:${FRONT_PORT:-3000}"
     env_file:
       - ./.env
     environment:
-      - FRONT_PORT=${FRONT_PORT:-${PORT:-3000}}
-      - BACKEND_PORT=${BACKEND_PORT:-${PORT:-8000}}
-      - PORT=${FRONT_PORT:-${PORT:-3000}}
+      - FRONT_PORT=${FRONT_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - PORT=${FRONT_PORT:-3000}
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -102,7 +105,6 @@ services:
 volumes:
   aurora_pgdata:
   aurora_redisdata:
-
 
 networks:
   app-net:
