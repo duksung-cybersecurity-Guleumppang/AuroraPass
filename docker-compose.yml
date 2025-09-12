@@ -51,7 +51,7 @@ services:
 
         # 1) 테이블이 없으면 최소 스키마 생성
         EXISTS=$(psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT to_regclass('public.captcha_files') IS NOT NULL;")
-        if [ "$EXISTS" != "t" ]; then
+        if [ "$$EXISTS" != "t" ]; then
           echo "[migrator] create table captcha_files"
           psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "
             CREATE TABLE IF NOT EXISTS captcha_files (
