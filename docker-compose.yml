@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   postgres:
     image: postgres:15
@@ -47,9 +49,9 @@ services:
         set -e
         echo "[migrator] ensuring minimal schema..."
         export PGPASSWORD="$POSTGRES_PASSWORD"
-        # DB 준비까지 대기 (DB도 명시)
+        # wait for DB ready (with DB name)
         until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done
-        # 한 줄씩 -c로 실행 (윈도우/인용 이슈 회피)
+        # run each statement with -c (safer across shells)
         psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
           -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS used boolean NOT NULL DEFAULT false;"
         psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
@@ -97,7 +99,12 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: sh -lc "bun install && bun run dev"
+    command:
+      - sh
+      - -lc
+      - |
+        bun install
+        bun run dev
     depends_on:
       - backend
     networks: [ app-net ]
