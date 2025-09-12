@@ -1,20 +1,18 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:15
     container_name: aurora_postgres
     environment:
-      - POSTGRES_DB=aurora
-      - POSTGRES_USER=appuser
-      - POSTGRES_PASSWORD=apppass
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - aurora_pgdata:/var/lib/postgresql/data
       - ./backend/db/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U appuser -d aurora" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -47,17 +45,32 @@ services:
       - -c
       - |
         set -e
-        echo "[migrator] ensuring minimal schema..."
+        echo "[migrator] ensure schema"
         export PGPASSWORD="$POSTGRES_PASSWORD"
-        # wait for DB ready (with DB name)
         until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done
-        # run each statement with -c (safer across shells)
+
+        # 1) 테이블이 없으면 최소 스키마 생성
+        EXISTS=$(psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT to_regclass('public.captcha_files') IS NOT NULL;")
+        if [ "$EXISTS" != "t" ]; then
+          echo "[migrator] create table captcha_files"
+          psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "
+            CREATE TABLE IF NOT EXISTS captcha_files (
+              id SERIAL PRIMARY KEY,
+              audio_hash TEXT UNIQUE,
+              used BOOLEAN NOT NULL DEFAULT FALSE,
+              expires_at TIMESTAMPTZ
+            );
+          "
+        fi
+
+        # 2) 컬럼/인덱스 보강(있으면 무시)
         psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
           -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS used boolean NOT NULL DEFAULT false;"
         psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
           -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS expires_at timestamptz;"
         psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
-          -c "CREATE UNIQUE INDEX IF NOT EXISTS uq_captcha_files_audio_hash ON captcha_files (audio_hash);"
+          -c 'CREATE UNIQUE INDEX IF NOT EXISTS uq_captcha_files_audio_hash ON captcha_files (audio_hash);'
+
         echo "[migrator] done."
     restart: "no"
     networks: [ app-net ]
