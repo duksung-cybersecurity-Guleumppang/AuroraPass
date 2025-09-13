@@ -13,7 +13,7 @@ dc() {
 }
 
 echo "[ApplicationStart] docker compose up -d"
-dc --env-file .env up -d --remove-orphans
+dc up -d
 
 # 호스트에 Nginx를 쓰는 경우만 재로드 (없으면 skip)
 if command -v nginx &>/dev/null; then
