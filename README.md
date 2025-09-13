@@ -1,6 +1,6 @@
 # Aurora Pass - 수강신청 시스템
 
-캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 **PostgreSQL + Redis**를 활용한 완전한 DB 기반 아키텍처입니다.
+캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 **PostgreSQL + Redis**를 활용한 아키텍처입니다.
 
 ## 데이터베이스 구성
 
@@ -49,10 +49,45 @@ docker compose up --build
 # - 프론트엔드: http://localhost:3000
 # - 백엔드 API: http://localhost:8000
 # - API 문서: http://localhost:8000/docs
-# - 헬스체크: http://localhost:8000/readyz
+# - 헬스체크(라이브니스): http://localhost:8000/healthz
+# - 레디니스(논블로킹): http://localhost:8000/readyz
 
 # 3. 종료
 docker compose down
+```
+
+## 런타임 동작(그레이스풀 종료/리더락/레디니스)
+
+- FastAPI Lifespan으로 시작/종료 훅 제어: 초기화 후 앱 기동, 종료 시 순서대로 정리
+  - 종료 순서: 스케줄러 stop → 유한 join → 리더락 해제 → DB 엔진 dispose → 앱 종료 완료
+- Top-up 스케줄러는 환경변수로 조건부 기동(`TOPUP_ENABLED=1`에서만 시작)
+- 단일 인스턴스 보장: PostgreSQL advisory lock(`pg_try_advisory_lock`) 기반 리더 선출
+- /readyz는 백그라운드 ReadinessProbe 스레드의 캐시값을 즉시 반환(실시간 I/O 없음)
+- Docker Compose: `init: true`, `stop_signal: SIGTERM`, `stop_grace_period: 30s`로 그레이스풀 종료 보장
+
+### 핵심 환경 변수(추가)
+
+```bash
+# 스케줄러 토글/조정
+TOPUP_ENABLED=0               # 1이면 스케줄러 기동
+TOPUP_JOIN_TIMEOUT_SEC=25     # 종료 대기 상한(초)
+INVENTORY_TARGET=1000         # 목표 재고
+TOP_UP_INTERVAL_SEC=60        # 점검 주기(초)
+MAX_PER_TICK=200              # 틱당 최대 합성 수
+BATCH_SIZE=50                 # 배치 크기
+
+# DB 풀/타임아웃
+DB_STATEMENT_TIMEOUT_MS=2000  # 세션별 statement_timeout(ms)
+POOL_SIZE=5
+MAX_OVERFLOW=10
+POOL_RECYCLE_SEC=1800
+POOL_PRE_PING=1               # 1이면 활성화
+DB_CONNECT_TIMEOUT_SEC=1      # 드라이버 연결 타임아웃(초)
+DB_POOL_TIMEOUT_SEC=2         # 풀 대기 타임아웃(초)
+
+# Redis 타임아웃
+REDIS_SOCKET_TIMEOUT_SEC=1
+REDIS_CONNECT_TIMEOUT_SEC=1
 ```
 
 ## 단일 서버(EC2 등)에서 전체 스택 배포
@@ -186,7 +221,7 @@ docker compose logs frontend -n 50
 ### PostgreSQL 조회
 ```bash
 # 테이블 목록
-docker exec aurora_postgres psql -U appuser -d aurora -c "\dt"
+docker exec aurora_postgres psql -U appuser -d aurora -c "\\dt"
 
 # 레코드 수 확인
 docker exec aurora_postgres psql -U appuser -d aurora -c "
@@ -232,14 +267,14 @@ docker exec aurora_redis redis-cli INFO server | grep redis_version
 AuroraPass/
 ├── docker-compose.yml          # 개발용 (PostgreSQL + Redis 포함)
 ├── backend/
-│   ├── main.py                 # FastAPI 앱 + 헬스체크
+│   ├── main.py                 # FastAPI 앱 + Lifespan + 헬스/레디니스
 │   ├── db/
 │   │   ├── models.py           # SQLAlchemy ORM 모델
-│   │   ├── session.py          # DB 세션 팩토리
-│   │   ├── redis_client.py     # Redis 클라이언트
+│   │   ├── session.py          # DB 세션/풀/타임아웃
+│   │   ├── redis_client.py     # Redis 클라이언트(소켓/연결 타임아웃)
 │   │   └── init/               # DB 초기화 스크립트
 │   ├── repositories/           # 리포지토리 패턴
-│   ├── services/               # 비즈니스 로직
+│   ├── services/               # 비즈니스 로직(Top-up 스케줄러 포함)
 │   ├── api/                    # FastAPI 라우터
 │   └── scripts/                # DB 유틸리티
 ├── frontend/                   # Vite + React + TypeScript
@@ -301,20 +336,36 @@ DB에 저장된 한글/영어 오디오 소스를 합성하여 동적으로 CAPT
    - Top-up 스케줄러 시작
 
 2. **Top-up 스케줄러** (`backend/services/topup_scheduler.py`)
-   - 60초 간격으로 재고 확인
+   - 기본 60초 간격으로 재고 확인(ENV로 조정)
    - 목표 재고(기본 1000개) 미달 시 자동 합성
    - 한글 오디오: 최근 30일 저사용 우선 + 랜덤
    - 영어 오디오: 무제한 랜덤 재사용
+   - 비-데몬 스레드/이벤트/유한 join으로 그레이스풀 종료
 
 ### 환경 변수 설정
 `.env` 파일에 다음 변수들을 설정할 수 있습니다:
 
 ```bash
 # CAPTCHA Top-up Scheduler Settings
-INVENTORY_TARGET=1000        # 목표 재고 수량
-TOP_UP_INTERVAL_SEC=60       # 점검 주기 (초)
+TOPUP_ENABLED=0             # 1이면 스케줄러 기동
+TOPUP_JOIN_TIMEOUT_SEC=25   # 종료 대기 상한(초)
+INVENTORY_TARGET=1000       # 목표 재고 수량
+TOP_UP_INTERVAL_SEC=60      # 점검 주기 (초)
 MAX_PER_TICK=200            # 틱당 최대 합성 수량
 BATCH_SIZE=50               # 배치 크기
+
+# Database pool/timeouts
+DB_STATEMENT_TIMEOUT_MS=2000
+POOL_SIZE=5
+MAX_OVERFLOW=10
+POOL_RECYCLE_SEC=1800
+POOL_PRE_PING=1
+DB_CONNECT_TIMEOUT_SEC=1
+DB_POOL_TIMEOUT_SEC=2
+
+# Redis timeouts
+REDIS_SOCKET_TIMEOUT_SEC=1
+REDIS_CONNECT_TIMEOUT_SEC=1
 ```
 
 ### 수동 관리 명령어
@@ -375,7 +426,7 @@ Docker 없이 각각 실행할 때:
 ```bash
 # 백엔드 (FastAPI)
 cd backend
-uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload --lifespan on
 
 # 프론트엔드 (Vite + React + TypeScript)  
 cd frontend
