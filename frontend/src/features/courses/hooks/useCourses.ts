@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Course, CaptchaModalState } from '../../../shared/types/courses';
 import { formatEnrollmentResult } from '../../../shared/utils/messages';
 import { CAPTCHA_MESSAGES } from '../../../shared/constants/captcha';
+import { fetchAfterReady } from '../../../shared/utils/healthz';
 
 /**
  * useCourses 훅의 반환 타입
@@ -17,18 +18,18 @@ export interface UseCoursesReturn {
   cart: Course[];
   enrolledCourses: Course[];
   cartIdSet: Set<string>;
-  
+
   // UI 상태
   loading: boolean;
   message: string;
-  
+
   // 캡차 관련 상태
   captchaModal: CaptchaModalState;
   captchaInput: string;
   captchaMsg: string;
   uiCaptchaRequired: boolean;
   clickTimesRef: React.MutableRefObject<number[]>;
-  
+
   // 액션 함수들
   fetchCourses: () => Promise<void>;
   fetchCart: () => Promise<void>;
@@ -52,17 +53,17 @@ export function useCourses(): UseCoursesReturn {
   const [courses, setCourses] = useState<Course[]>([]); // 전체 강의 목록
   const [cart, setCart] = useState<Course[]>([]); // 장바구니에 담긴 강의 목록
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]); // 수강신청 완료된 강의 목록
-  
+
   // UI 상태 관리
   const [loading, setLoading] = useState(false); // 수강신청 진행 중 여부
   const [message, setMessage] = useState(''); // 사용자에게 보여줄 상태 메시지
-  
+
   // 캡차 관련 상태 관리
   const [captchaModal, setCaptchaModal] = useState<CaptchaModalState>({ open: false }); // 캡차 모달 상태
   const [captchaInput, setCaptchaInput] = useState(''); // 사용자가 입력한 캡차 답안
   const [captchaMsg, setCaptchaMsg] = useState(''); // 캡차 검증 결과 메시지
   const [uiCaptchaRequired, setUiCaptchaRequired] = useState(false); // UI에서 캡차 요구 상태
-  
+
   // 빠른 클릭 감지를 위한 ref
   const clickTimesRef = useRef<number[]>([]); // 클릭 시간들을 저장하는 배열
 
@@ -73,10 +74,10 @@ export function useCourses(): UseCoursesReturn {
   const cancelEnrollment = (courseId: string) => {
     // 히스토리에서 해당 과목 제거
     setEnrolledCourses(prev => prev.filter(course => course.courseId !== courseId));
-    
+
     // 강의 목록에서 enrolled 수를 1 감소 (프론트엔드에서만)
-    setCourses(prev => prev.map(course => 
-      course.courseId === courseId 
+    setCourses(prev => prev.map(course =>
+      course.courseId === courseId
         ? { ...course, enrolled: Math.max(0, course.enrolled - 1) }
         : course
     ));
@@ -175,13 +176,13 @@ export function useCourses(): UseCoursesReturn {
       const successfulResults = results.filter((r: any) => r.success);
       const okCount = successfulResults.length;
       const failCount = results.length - okCount;
-      
+
       // 신청한 모든 과목들을 enrolledCourses에 저장 (성공/실패 무관)
-      const enrolledCourses = cart.filter(course => 
+      const enrolledCourses = cart.filter(course =>
         results.some((r: any) => r.courseId === course.courseId)
       );
       setEnrolledCourses(prev => [...prev, ...enrolledCourses]);
-      
+
       setMessage(formatEnrollmentResult(okCount, failCount));
       await fetchCourses();
       await fetchCart();
@@ -221,7 +222,7 @@ export function useCourses(): UseCoursesReturn {
   const refreshCaptcha = async () => {
     setCaptchaMsg('');
     setCaptchaInput('');
-    const res = await fetch('/api/captcha/generate');
+    const res = await fetchAfterReady('/api/captcha/generate');
     const data = await res.json();
     setCaptchaModal({ open: true, captchaId: data?.captchaId, audioPath: data?.audioPath });
   };
@@ -248,7 +249,7 @@ export function useCourses(): UseCoursesReturn {
     captchaMsg,
     uiCaptchaRequired,
     clickTimesRef,
-    
+
     // 함수들
     fetchCourses,
     fetchCart,

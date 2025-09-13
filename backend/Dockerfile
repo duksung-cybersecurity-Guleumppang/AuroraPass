@@ -27,5 +27,9 @@ ARG PORT
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
+# 엔트리포인트 스크립트를 컨테이너 고정 경로에 복사하고 실행 권한 부여
+COPY backend/entrypoint.sh /usr/local/bin/app-entrypoint.sh
+RUN chmod +x /usr/local/bin/app-entrypoint.sh
+
 # 애플리케이션을 실행합니다.
-CMD ["sh", "-lc", "python scripts/bootstrap.py && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+ENTRYPOINT ["/usr/local/bin/app-entrypoint.sh"]

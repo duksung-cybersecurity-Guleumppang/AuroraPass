@@ -129,9 +129,10 @@ def prefetch_synthesis():
     def background_synthesis():
         try:
             # PoC 모듈 임포트
-            # __file__ = /app/backend/scripts/bootstrap.py
-            # repo root = parents[2] → /app
-            poc_path = Path(__file__).parents[2] / "poc" / "captcha_synth"
+            # __file__ = /app/scripts/bootstrap.py (Docker 컨테이너)
+            # repo root = parent.parent → /app
+            repo_root = Path(__file__).resolve().parent.parent
+            poc_path = repo_root / "poc" / "captcha_synth"
             sys.path.insert(0, str(poc_path))
             
             from synthesize_captcha import synthesize_multiple_captchas
@@ -159,17 +160,45 @@ def bootstrap_sequence():
     """부팅 초기화 시퀀스 실행"""
     print(" 부팅 초기화 시퀀스 시작...")
     
-    steps = [
+    # 필수 단계는 동기 진행
+    essential_steps = [
         ("DB 마이그레이션", run_migrations),
         ("초기 시드", seed_initial_captcha),
-        ("정답 사전 UPSERT", upsert_answers),
-        ("원본 오디오 UPSERT", upsert_audio_sources),
     ]
-    
-    for step_name, step_func in steps:
+    for step_name, step_func in essential_steps:
         print(f"\n {step_name} 실행 중...")
         if not step_func():
             print(f" {step_name} 실패로 부팅 중단")
+            sys.exit(1)
+
+    # 대량 적재는 비동기 전환 옵션
+    async_loads = os.getenv("BOOTSTRAP_ASYNC_LOADS", "1").lower() in ("1", "true", "yes", "on")
+    if async_loads:
+        print("\n 대량 적재(정답/오디오) 비동기 실행 모드 활성화")
+        
+        def _bg_loads():
+            try:
+                print(" 정답 사전 UPSERT 실행 중...")
+                upsert_answers()
+            except Exception as e:
+                print(f"  정답 사전 UPSERT 백그라운드 실패(무시됨): {e}")
+            
+            try:
+                print(" 원본 오디오 UPSERT 실행 중...")
+                upsert_audio_sources()
+            except Exception as e:
+                print(f"  원본 오디오 UPSERT 백그라운드 실패(무시됨): {e}")
+
+        t = threading.Thread(target=_bg_loads, daemon=True)
+        t.start()
+    else:
+        print("\n 정답 사전 UPSERT 실행 중...")
+        if not upsert_answers():
+            print(" 정답 사전 UPSERT 실패로 부팅 중단")
+            sys.exit(1)
+        print("\n 원본 오디오 UPSERT 실행 중...")
+        if not upsert_audio_sources():
+            print(" 원본 오디오 UPSERT 실패로 부팅 중단")
             sys.exit(1)
     
     print("\n 모든 초기화 단계 완료!")

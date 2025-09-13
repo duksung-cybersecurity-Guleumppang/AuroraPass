@@ -48,10 +48,10 @@ class TopUpScheduler:
             # PoC 및 스크립트 경로 등록
             # __file__ = /app/services/topup_scheduler.py
             # repo root = parent.parent → /app
-            poc_path = Path(__file__).parent.parent / "poc" / "captcha_synth"
+            poc_path = Path(__file__).resolve().parent.parent / "poc" / "captcha_synth"
             sys.path.insert(0, str(poc_path))
             
-            scripts_path = Path(__file__).parent.parent / "scripts"
+            scripts_path = Path(__file__).resolve().parent.parent / "scripts"
             sys.path.insert(0, str(scripts_path))
             
             from synthesize_captcha import synthesize_single_captcha

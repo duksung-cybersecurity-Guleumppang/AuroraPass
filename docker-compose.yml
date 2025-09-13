@@ -80,7 +80,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     init: true # tini로 PID1 안정화
-    stop_signal: SIGTERM # 명시적 종료 신호
+    stop_signal: SIGINT # 정상 종료 시 exit code 0 보장 (uvicorn가 SIGINT=0 처리)
     stop_grace_period: 30s # 유예 시간
     ports:
       - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
@@ -92,6 +92,7 @@ services:
     environment:
       - PORT=${BACKEND_PORT:-8000}
       - PYTHONPATH=/app
+      - RUN_BOOTSTRAP=${RUN_BOOTSTRAP:-1}
       # Top-up 스케줄러 설정
       - TOPUP_ENABLED=${TOPUP_ENABLED:-0}
       - TOPUP_JOIN_TIMEOUT_SEC=${TOPUP_JOIN_TIMEOUT_SEC:-25}
@@ -107,16 +108,7 @@ services:
       - POOL_PRE_PING=${POOL_PRE_PING:-1}
       # 종료 타임아웃 계층
       - STOP_GRACE_SEC=${STOP_GRACE_SEC:-30}
-    command:
-      - uvicorn
-      - main:app
-      - --host
-      - 0.0.0.0
-      - --port
-      - "${BACKEND_PORT:-8000}"
-      - --lifespan
-      - on
-      - --access-log
+    # Dockerfile의 CMD(/app/entrypoint.sh)를 사용해 신호 처리 및 종료코드 0 보장
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')" ]
       interval: 10s

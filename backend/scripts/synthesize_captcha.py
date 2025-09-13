@@ -12,9 +12,10 @@ from db.session import get_db_session
 from sqlalchemy import text
 
 # PoC 모듈 임포트를 위한 경로 추가 (/app 기준으로 계산)
-# __file__ = /app/backend/scripts/synthesize_captcha.py
-# repo root = parents[2] → /app
-poc_path = Path(__file__).parents[2] / "poc" / "captcha_synth"
+# __file__ = /app/scripts/synthesize_captcha.py (Docker 컨테이너)
+# repo root = parent.parent → /app
+repo_root = Path(__file__).resolve().parent.parent
+poc_path = repo_root / "poc" / "captcha_synth"
 sys.path.insert(0, str(poc_path))
 
 try:

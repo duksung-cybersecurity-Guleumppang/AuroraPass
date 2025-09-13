@@ -98,7 +98,7 @@ def save_audio_to_bytes(y: np.ndarray, sr: int = SR) -> bytes:
     sf.write(buffer, y, sr, format='WAV')
     return buffer.getvalue()
 
-def synthesize_captcha_audio(ko_audio_bytes: bytes, en_audio_bytes: bytes) -> tuple[bytes, dict]:
+def synthesize_captcha_audio(ko_audio_bytes: bytes, en_audio_bytes: bytes, stop_checker=None) -> tuple[bytes, dict]:
     """
     한글과 영어 오디오를 합성하여 CAPTCHA 오디오를 생성합니다.
     
@@ -109,6 +109,13 @@ def synthesize_captcha_audio(ko_audio_bytes: bytes, en_audio_bytes: bytes) -> tu
     Returns:
         tuple: (합성된 오디오 바이트, 메타데이터 딕셔너리)
     """
+    # 인터럽트 체크 헬퍼
+    def _should_stop() -> bool:
+        try:
+            return bool(stop_checker and stop_checker())
+        except Exception:
+            return False
+
     # 랜덤화 시드 설정 (요청 시 고정 가능)
     if SEED is not None:
         random.seed(SEED)
@@ -121,38 +128,55 @@ def synthesize_captcha_audio(ko_audio_bytes: bytes, en_audio_bytes: bytes) -> tu
     foreign_gain_runtime = float(FOREIGN_GAIN * (1.0 + np.random.uniform(-0.1, 0.1)))
     korean_gain_runtime = float(KOREAN_GAIN * (1.0 + np.random.uniform(-0.1, 0.1)))
 
+    if _should_stop():
+        raise RuntimeError("Synthesis interrupted (pre-load)")
+
     # 오디오 로드
     ko_audio = load_audio_from_bytes(ko_audio_bytes, SR)
     en_audio = load_audio_from_bytes(en_audio_bytes, SR)
     
     # 1. 무음 제거 (옵션)
     if TRIM_SILENCE:
+        if _should_stop():
+            raise RuntimeError("Synthesis interrupted (trim)")
         ko_audio = trim_silence_fn(ko_audio, TRIM_TOP_DB)
         en_audio = trim_silence_fn(en_audio, TRIM_TOP_DB)
     
     # 2. 길이 맞추기 - 더 긴 쪽에 맞춤
+    if _should_stop():
+        raise RuntimeError("Synthesis interrupted (fit)")
     max_len = max(len(ko_audio), len(en_audio))
     ko_audio = fit_to_length(ko_audio, max_len, FIT_METHOD)
     en_audio = fit_to_length(en_audio, max_len, FIT_METHOD)
     
     # 3. 피치 변경 (옵션)
     if APPLY_PITCH_SHIFT:
+        if _should_stop():
+            raise RuntimeError("Synthesis interrupted (pitch)")
         try:
             en_audio = librosa.effects.pitch_shift(en_audio, sr=SR, n_steps=pitch_steps_runtime)
         except Exception as e:
             print(f"  피치 변경 실패: {e}")
     
     # 4. 게인 적용
+    if _should_stop():
+        raise RuntimeError("Synthesis interrupted (gain)")
     ko_audio = ko_audio * korean_gain_runtime
     en_audio = en_audio * foreign_gain_runtime
     
     # 5. 믹싱
+    if _should_stop():
+        raise RuntimeError("Synthesis interrupted (mix)")
     mixed_audio = safe_mix(ko_audio, en_audio, gain_runtime)
     
     # 6. 앞에 무음 추가
+    if _should_stop():
+        raise RuntimeError("Synthesis interrupted (silence)")
     final_audio = prepend_silence(mixed_audio, SR, silence_runtime)
     
     # 7. 바이트로 변환
+    if _should_stop():
+        raise RuntimeError("Synthesis interrupted (export)")
     result_bytes = save_audio_to_bytes(final_audio, SR)
     
     # 8. 메타데이터 생성
