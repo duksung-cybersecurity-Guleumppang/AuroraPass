@@ -8,8 +8,13 @@ if not REDIS_URL:
         "REDIS_URL is not set; please provide it via .env or environment variables."
     )
 
-# Redis client instance
-redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+# Redis client instance with short socket timeouts to prevent readiness blocking
+redis_client = redis.from_url(
+    REDIS_URL,
+    decode_responses=True,
+    socket_timeout=float(os.getenv("REDIS_SOCKET_TIMEOUT_SEC", "1.0")),
+    socket_connect_timeout=float(os.getenv("REDIS_CONNECT_TIMEOUT_SEC", "1.0")),
+)
 
 
 def ping_redis() -> bool:
