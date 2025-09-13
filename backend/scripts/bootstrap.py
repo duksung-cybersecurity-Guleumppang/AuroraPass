@@ -129,7 +129,9 @@ def prefetch_synthesis():
     def background_synthesis():
         try:
             # PoC 모듈 임포트
-            poc_path = Path(__file__).parent.parent.parent / "poc" / "captcha_synth"
+            # __file__ = /app/backend/scripts/bootstrap.py
+            # repo root = parents[2] → /app
+            poc_path = Path(__file__).parents[2] / "poc" / "captcha_synth"
             sys.path.insert(0, str(poc_path))
             
             from synthesize_captcha import synthesize_multiple_captchas

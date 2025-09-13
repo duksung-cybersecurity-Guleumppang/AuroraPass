@@ -239,6 +239,96 @@ def _ensure_captcha_data():
         logger.error("Failed to ensure CAPTCHA data", error=str(e))
 
 
+def _ensure_audio_synthesis_schema() -> bool:
+    """오디오 합성 관련 스키마(테이블/인덱스) 보장.
+    - 03_audio_synthesis_schema.sql, 04_captcha_availability.sql 실행 (멱등)
+    """
+    try:
+        # scripts.run_migration 사용 (멱등 SQL)
+        from scripts.run_migration import run_migration
+        init_dir = Path(__file__).parent / "db" / "init"
+        file_03 = str(init_dir / "03_audio_synthesis_schema.sql")
+        file_04 = str(init_dir / "04_captcha_availability.sql")
+
+        ok_03 = run_migration(file_03)
+        ok_04 = run_migration(file_04)
+
+        if ok_03 and ok_04:
+            logger.info("Audio synthesis schema ensured")
+            return True
+        logger.warning("Audio synthesis schema not fully ensured", ok_03=ok_03, ok_04=ok_04)
+        return False
+    except Exception as e:
+        logger.error("Failed to ensure audio synthesis schema", error=str(e))
+        return False
+
+
+def _autoload_ko_answers_if_empty() -> None:
+    """ko 정답 매핑이 비어 있을 때 JSON에서 자동 적재."""
+    if not engine:
+        return
+    try:
+        with engine.connect() as conn:
+            try:
+                cnt = conn.execute(text("SELECT COUNT(*) FROM ko_source_answers")).scalar()
+            except Exception:
+                # 테이블이 없다면 스키마 보장부터
+                _ensure_audio_synthesis_schema()
+                cnt = conn.execute(text("SELECT COUNT(*) FROM ko_source_answers")).scalar()
+
+        if not cnt or cnt == 0:
+            try:
+                from scripts.load_answers_to_db import load_answers_to_db
+                loaded = load_answers_to_db()
+                logger.info("Autoloaded ko answers from JSON", success=bool(loaded))
+            except Exception as e:
+                logger.error("Failed to autoload ko answers", error=str(e))
+        else:
+            logger.info("KO answers already present", count=int(cnt or 0))
+    except Exception as e:
+        logger.error("KO answers presence check failed", error=str(e))
+
+
+def _autoload_audio_sources_if_empty() -> None:
+    """ko/en 오디오 소스가 비어 있을 때 정적 디렉터리에서 자동 적재."""
+    if not engine:
+        return
+    try:
+        with engine.connect() as conn:
+            try:
+                row = conn.execute(text("""
+                    SELECT 
+                      COALESCE(SUM(CASE WHEN language='ko' THEN 1 ELSE 0 END),0) AS ko_count,
+                      COALESCE(SUM(CASE WHEN language='en' THEN 1 ELSE 0 END),0) AS en_count
+                    FROM audio_sources
+                """)).first()
+            except Exception:
+                # 테이블이 없다면 스키마 보장부터
+                _ensure_audio_synthesis_schema()
+                row = conn.execute(text("""
+                    SELECT 
+                      COALESCE(SUM(CASE WHEN language='ko' THEN 1 ELSE 0 END),0) AS ko_count,
+                      COALESCE(SUM(CASE WHEN language='en' THEN 1 ELSE 0 END),0) AS en_count
+                    FROM audio_sources
+                """
+                )).first()
+
+        ko_count = int(row.ko_count) if row and hasattr(row, "ko_count") else 0
+        en_count = int(row.en_count) if row and hasattr(row, "en_count") else 0
+
+        if ko_count == 0 or en_count == 0:
+            try:
+                from scripts.load_audio_to_db import load_all_audio_sources
+                total = load_all_audio_sources()
+                logger.info("Autoloaded audio sources", total_loaded=int(total or 0))
+            except Exception as e:
+                logger.error("Failed to autoload audio sources", error=str(e))
+        else:
+            logger.info("Audio sources already present", ko=ko_count, en=en_count)
+    except Exception as e:
+        logger.error("Audio sources presence check failed", error=str(e))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI Lifespan: 시작/종료 단일 책임"""
@@ -249,6 +339,11 @@ async def lifespan(app: FastAPI):
     try:
         # 1. 기본 데이터 보장
         _ensure_captcha_data()
+
+        # 오디오 합성 파이프라인 스키마 및 데이터 보장
+        _ensure_audio_synthesis_schema()
+        _autoload_ko_answers_if_empty()
+        _autoload_audio_sources_if_empty()
         
         # 2. 환경 게이트: TOPUP_ENABLED 파싱
         topup_enabled = _parse_topup_enabled()
