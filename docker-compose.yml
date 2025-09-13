@@ -47,39 +47,12 @@ services:
     environment:
       - PORT=${BACKEND_PORT:-${PORT:-8000}}
       - PYTHONPATH=/app
-            - TOPUP_ENABLED=${TOPUP_ENABLED:-0}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-         depends_on:
-      migrator:
-       condition: service_completed_successfully
-     postgres:
-       condition: service_healthy
-     redis:
-       condition: service_healthy
     networks: [ app-net ]
-
-  migrator:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    env_file:
-      - ./.env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: >
-      sh -lc '
-      set -e
-      echo "[migrator] running alembic upgrade head...";
-      alembic upgrade head || python -m alembic upgrade head
-      '
-    restart: "no"
-    networks: [ app-net ]
-
 
   frontend:
     build: ./frontend
