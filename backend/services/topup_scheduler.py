@@ -120,8 +120,23 @@ class TopUpScheduler:
             if self._stop_event.is_set():
                 return False
             
-            # TODO: 실제 합성 함수에 타임아웃/중단 체크 추가 필요
-            success = self.synthesize_single_captcha()
+            # stop_event 연동용 콜백
+            def _stop_checker() -> bool:
+                return self._stop_event.is_set()
+
+            # 합성 타임아웃 (환경 변수, 기본 10초)
+            timeout_sec = float(os.getenv("SYNTHESIS_TIMEOUT_SEC", "10"))
+
+            # 워커 스레드에서 합성 실행
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self.synthesize_single_captcha, _stop_checker)
+                try:
+                    success = future.result(timeout=timeout_sec)
+                except concurrent.futures.TimeoutError:
+                    logger.warning("Synthesis timed out", timeout_sec=timeout_sec)
+                    # 타임아웃 시 이후 아이템 진행 (현재 작업은 포기)
+                    return False
             
             if success:
                 self.total_synthesized += 1

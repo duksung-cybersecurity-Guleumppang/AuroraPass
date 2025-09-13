@@ -127,7 +127,7 @@ def save_synthesized_captcha(
             session.rollback()
             return captcha_id, False
 
-def synthesize_single_captcha() -> bool:
+def synthesize_single_captcha(stop_checker=None) -> bool:
     """단일 CAPTCHA를 합성하여 DB에 저장합니다."""
     print(" CAPTCHA 합성을 시작합니다...")
     
@@ -172,7 +172,11 @@ def synthesize_single_captcha() -> bool:
         # 합성
         print(" 오디오 합성 중...")
         try:
-            synthesized_audio, metadata = synthesize_captcha_audio(ko_audio_data, en_audio_data)
+            synthesized_audio, metadata = synthesize_captcha_audio(
+                ko_audio_data,
+                en_audio_data,
+                stop_checker=stop_checker
+            )
             print(f" 합성 완료:")
             print(f"   - 크기: {len(synthesized_audio):,} bytes")
             print(f"   - 지속시간: {metadata['duration_ms']}ms")
