@@ -22,7 +22,7 @@ export const COURSE_DEFAULTS = {
   DEFAULT_CREDITS: 3,
   COURSE_LEVEL: '학사',
   COURSE_TYPE: '전선',
-  DEPARTMENT: '컴퓨터공학과',
+  DEPARTMENT: '사이버보안전공',
   CLASS_NUMBER: '01',
   THEORY_HOURS: 3,
   PRACTICE_HOURS: 0,
