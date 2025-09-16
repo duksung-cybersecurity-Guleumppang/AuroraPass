@@ -3,7 +3,7 @@ name: Deploy to EC2 (DEV)
 on:
   push:
     branches:
-      - dev   # dev 브랜치에 push될 때만 실행
+      - dev   # dev 브랜치 push 시 실행
 
 jobs:
   deploy:
@@ -11,19 +11,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2   # 서울 리전
+          aws-region: ap-northeast-2
 
-      - name: Deploy with CodeDeploy
-        uses: aws-actions/aws-codedeploy-deploy@v1
-        with:
-          application-name: AuroraPassApp       # CodeDeploy 애플리케이션 이름
-          deployment-group: aurorapass-ec2-dev  # 새로 만든 배포 그룹 이름
-          bundle-type: zip
-          revision-location: github
+      - name: Create CodeDeploy deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name "AuroraPassApp" \
+            --deployment-group-name "aurorapass-ec2-dev" \
+            --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
