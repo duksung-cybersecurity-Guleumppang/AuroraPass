@@ -17,16 +17,17 @@ class CaptchaService:
         """
         captcha_id = str(uuid.uuid4())
         
-        # DB에서 무작위 CAPTCHA 선택
+        # DB에서 가용한 CAPTCHA 원자적 소비
         captcha_data = captcha_repository.get_random_captcha()
         if not captcha_data:
-            raise RuntimeError("CAPTCHA 파일이 DB에 없습니다.")
+            raise RuntimeError("사용 가능한 CAPTCHA 파일이 DB에 없습니다.")
         
-        file_id, filename, answer = captcha_data
+        file_id, filename, answer, audio_data, content_type = captcha_data
         audio_path = f"/api/captcha/audio/{file_id}"
         
-        # 생성된 CAPTCHA ID와 정답을 Redis에 저장합니다.
-        store_captcha(captcha_id, answer, ttl_minutes=5)
+        # 생성된 CAPTCHA ID와 정답을 Redis에 TTL 5분으로 저장합니다.
+        from db.redis_client import redis_client
+        redis_client.setex(f"captcha:{captcha_id}", 300, answer)
         
         print(f"CAPTCHA Created: ID={captcha_id}, File={filename}, Answer={answer}") # 디버깅용 로그
         

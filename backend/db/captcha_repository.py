@@ -6,18 +6,28 @@ import random
 
 class CaptchaRepository:
     
-    def get_random_captcha(self) -> Optional[Tuple[str, str, str]]:
-        """Get random CAPTCHA file: (id, filename, answer)"""
+    def get_random_captcha(self) -> Optional[Tuple[str, str, str, bytes, str]]:
+        """Get and atomically consume available CAPTCHA: (id, filename, answer, audio_data, content_type)"""
         with get_db_session() as session:
             result = session.execute(text("""
-                SELECT id, filename, answer 
-                FROM captcha_files 
-                ORDER BY RANDOM() 
-                LIMIT 1
+                WITH picked AS (
+                  SELECT id
+                  FROM captcha_files
+                  WHERE used = false AND (expires_at IS NULL OR expires_at > now())
+                  ORDER BY random()
+                  FOR UPDATE SKIP LOCKED
+                  LIMIT 1
+                )
+                UPDATE captcha_files c
+                SET used = true
+                FROM picked p
+                WHERE c.id = p.id
+                RETURNING c.id, c.filename, c.answer, c.audio_data, c.content_type
             """)).fetchone()
             
             if result:
-                return result.id, result.filename, result.answer
+                session.commit()
+                return result.id, result.filename, result.answer, result.audio_data, result.content_type
             return None
     
     def get_captcha_audio(self, captcha_id: str) -> Optional[Tuple[bytes, str]]:

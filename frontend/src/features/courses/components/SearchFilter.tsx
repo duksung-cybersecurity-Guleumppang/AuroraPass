@@ -85,8 +85,8 @@ export default function SearchFilter() {
           <label>개설전공/학과 <span className={styles.required}>*</span></label>
           <select className={styles.filterSelect}>
             <option value="">선택하세요</option>
+            <option value="사이버보안전공">사이버보안전공</option>
             <option value="컴퓨터공학과">컴퓨터공학과</option>
-            <option value="전자공학과">전자공학과</option>
           </select>
         </div>
       </div>

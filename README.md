@@ -1,24 +1,28 @@
 # Aurora Pass - 수강신청 시스템
 
-캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 **PostgreSQL + Redis**를 활용한 완전한 DB 기반 아키텍처입니다.
+캡차(오디오)와 비정상 접근 방지 로직이 적용된 수강신청 데모 서비스입니다. 백엔드는 FastAPI, 프론트엔드는 Vite + React + TypeScript(+Bun)로 구성되어 있으며 **PostgreSQL + Redis**를 활용한 아키텍처입니다.
 
 ## 데이터베이스 구성
 
 ### **PostgreSQL 15** (관계형 데이터)
-- **6개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**
-- **현재 데이터**: 1명 사용자, 5개 강의, 3개 CAPTCHA 오디오 파일, 1건 수강신청
+- **8개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**, **audio_sources**, **ko_source_answers**
+- **현재 데이터**: 1명 사용자, 5개 강의, CAPTCHA 오디오 시스템(합성 지원), 1건 수강신청
 
 | 테이블 | 용도 | 레코드 수 |
 |---|---|---|
 | `users` | 사용자 정보 (UUID, username, email, password_hash) | 1 |
 | `courses` | 강의 정보 (id, title, capacity, enrolled_count) | 5 |
-| `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data) | 3 |
+| `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data, 합성 메타데이터) | 가변 |
+| `audio_sources` | **원본 오디오 소스** (한글/영어, bytea 저장) | 가변 |
+| `ko_source_answers` | **한글 소스 정답 매핑** (파일명 → 질문/정답) | 가변 |
 | `carts` | 사용자별 장바구니 | 1 |
 | `cart_items` | 장바구니 아이템 | 0 |
 | `enrollments` | 수강신청 내역 | 1 |
 
 ### 테이블별 역할 요약
-* captcha_files: CAPTCHA 오디오와 정답 저장. 컬럼: id(파일 ID), filename, answer, audio_data(bytea), content_type, created_at  
+* **captcha_files**: CAPTCHA 오디오와 정답 저장. 컬럼: id, filename, answer, audio_data(bytea), sample_rate, duration_ms, params(jsonb), pipeline_version, audio_hash, ko_source_id, en_source_id  
+* **audio_sources**: 원본 오디오 파일 저장. 컬럼: id, language('ko'|'en'), original_filename, audio_data(bytea), sample_rate, duration_ms, audio_hash  
+* **ko_source_answers**: 한글 소스 정답 매핑. 컬럼: ko_key(파일명), question, answer, ko_source_id  
 * users: 사용자 계정. 컬럼: id(UUID), username, email, password_hash, created_at  
 * courses: 강의 마스터. 컬럼: id, title, capacity, enrolled_count, updated_at  
 * carts: 사용자별 장바구니 컨테이너. 컬럼: id(UUID), user_id(UUID), created_at  
@@ -45,10 +49,45 @@ docker compose up --build
 # - 프론트엔드: http://localhost:3000
 # - 백엔드 API: http://localhost:8000
 # - API 문서: http://localhost:8000/docs
-# - 헬스체크: http://localhost:8000/readyz
+# - 헬스체크(라이브니스): http://localhost:8000/healthz
+# - 레디니스(논블로킹): http://localhost:8000/readyz
 
 # 3. 종료
 docker compose down
+```
+
+## 런타임 동작(그레이스풀 종료/리더락/레디니스)
+
+- FastAPI Lifespan으로 시작/종료 훅 제어: 초기화 후 앱 기동, 종료 시 순서대로 정리
+  - 종료 순서: 스케줄러 stop → 유한 join → 리더락 해제 → DB 엔진 dispose → 앱 종료 완료
+- Top-up 스케줄러는 환경변수로 조건부 기동(`TOPUP_ENABLED=1`에서만 시작)
+- 단일 인스턴스 보장: PostgreSQL advisory lock(`pg_try_advisory_lock`) 기반 리더 선출
+- /readyz는 백그라운드 ReadinessProbe 스레드의 캐시값을 즉시 반환(실시간 I/O 없음)
+- Docker Compose: `init: true`, `stop_signal: SIGTERM`, `stop_grace_period: 30s`로 그레이스풀 종료 보장
+
+### 핵심 환경 변수(추가)
+
+```bash
+# 스케줄러 토글/조정
+TOPUP_ENABLED=0               # 1이면 스케줄러 기동
+TOPUP_JOIN_TIMEOUT_SEC=25     # 종료 대기 상한(초)
+INVENTORY_TARGET=1000         # 목표 재고
+TOP_UP_INTERVAL_SEC=60        # 점검 주기(초)
+MAX_PER_TICK=200              # 틱당 최대 합성 수
+BATCH_SIZE=50                 # 배치 크기
+
+# DB 풀/타임아웃
+DB_STATEMENT_TIMEOUT_MS=2000  # 세션별 statement_timeout(ms)
+POOL_SIZE=5
+MAX_OVERFLOW=10
+POOL_RECYCLE_SEC=1800
+POOL_PRE_PING=1               # 1이면 활성화
+DB_CONNECT_TIMEOUT_SEC=1      # 드라이버 연결 타임아웃(초)
+DB_POOL_TIMEOUT_SEC=2         # 풀 대기 타임아웃(초)
+
+# Redis 타임아웃
+REDIS_SOCKET_TIMEOUT_SEC=1
+REDIS_CONNECT_TIMEOUT_SEC=1
 ```
 
 ## 단일 서버(EC2 등)에서 전체 스택 배포
@@ -182,7 +221,7 @@ docker compose logs frontend -n 50
 ### PostgreSQL 조회
 ```bash
 # 테이블 목록
-docker exec aurora_postgres psql -U appuser -d aurora -c "\dt"
+docker exec aurora_postgres psql -U appuser -d aurora -c "\\dt"
 
 # 레코드 수 확인
 docker exec aurora_postgres psql -U appuser -d aurora -c "
@@ -228,14 +267,14 @@ docker exec aurora_redis redis-cli INFO server | grep redis_version
 AuroraPass/
 ├── docker-compose.yml          # 개발용 (PostgreSQL + Redis 포함)
 ├── backend/
-│   ├── main.py                 # FastAPI 앱 + 헬스체크
+│   ├── main.py                 # FastAPI 앱 + Lifespan + 헬스/레디니스
 │   ├── db/
 │   │   ├── models.py           # SQLAlchemy ORM 모델
-│   │   ├── session.py          # DB 세션 팩토리
-│   │   ├── redis_client.py     # Redis 클라이언트
+│   │   ├── session.py          # DB 세션/풀/타임아웃
+│   │   ├── redis_client.py     # Redis 클라이언트(소켓/연결 타임아웃)
 │   │   └── init/               # DB 초기화 스크립트
 │   ├── repositories/           # 리포지토리 패턴
-│   ├── services/               # 비즈니스 로직
+│   ├── services/               # 비즈니스 로직(Top-up 스케줄러 포함)
 │   ├── api/                    # FastAPI 라우터
 │   └── scripts/                # DB 유틸리티
 ├── frontend/                   # Vite + React + TypeScript
@@ -273,6 +312,113 @@ curl -X POST http://localhost:8000/api/enroll
 - **백엔드**: 동일 사용자 3초 내 5회 이상 API 요청 시 CAPTCHA 요구
 - **적용 경로**: `/api/courses`, `/api/cart`, `/api/enroll`, `/api/my-courses`
 
+## CAPTCHA 오디오 합성 시스템
+
+### 개요
+DB에 저장된 한글/영어 오디오 소스를 합성하여 동적으로 CAPTCHA를 생성하는 자동화 시스템입니다.
+
+### 주요 구성요소
+- **원본 오디오 관리**: `audio_sources` 테이블에 한글/영어 WAV 파일을 bytea로 저장
+- **정답 사전**: `ko_source_answers` 테이블에 파일명→정답 매핑 저장  
+- **합성 엔진**: librosa 기반 오디오 처리 (피치변경, 믹싱, 게인조정)
+- **원자적 소비**: `used` 플래그로 중복 사용 방지
+- **자동 보충**: Top-up 스케줄러가 재고를 자동으로 유지
+
+### 자동 합성 시스템
+도커 시작 시 자동으로 다음이 실행됩니다:
+
+1. **부팅 초기화** (`backend/scripts/bootstrap.py`)
+   - DB 마이그레이션 전체 실행
+   - 초기 CAPTCHA 시드 (static/audio 10개)
+   - 정답 사전 UPSERT (static/real_answer.json)
+   - 원본 오디오 UPSERT (tts_men_ko/, foreign_women_eng/)
+   - 백그라운드 사전 합성 3개
+   - Top-up 스케줄러 시작
+
+2. **Top-up 스케줄러** (`backend/services/topup_scheduler.py`)
+   - 기본 60초 간격으로 재고 확인(ENV로 조정)
+   - 목표 재고(기본 1000개) 미달 시 자동 합성
+   - 한글 오디오: 최근 30일 저사용 우선 + 랜덤
+   - 영어 오디오: 무제한 랜덤 재사용
+   - 비-데몬 스레드/이벤트/유한 join으로 그레이스풀 종료
+
+### 환경 변수 설정
+`.env` 파일에 다음 변수들을 설정할 수 있습니다:
+
+```bash
+# CAPTCHA Top-up Scheduler Settings
+TOPUP_ENABLED=0             # 1이면 스케줄러 기동
+TOPUP_JOIN_TIMEOUT_SEC=25   # 종료 대기 상한(초)
+INVENTORY_TARGET=1000       # 목표 재고 수량
+TOP_UP_INTERVAL_SEC=60      # 점검 주기 (초)
+MAX_PER_TICK=200            # 틱당 최대 합성 수량
+BATCH_SIZE=50               # 배치 크기
+
+# Database pool/timeouts
+DB_STATEMENT_TIMEOUT_MS=2000
+POOL_SIZE=5
+MAX_OVERFLOW=10
+POOL_RECYCLE_SEC=1800
+POOL_PRE_PING=1
+DB_CONNECT_TIMEOUT_SEC=1
+DB_POOL_TIMEOUT_SEC=2
+
+# Redis timeouts
+REDIS_SOCKET_TIMEOUT_SEC=1
+REDIS_CONNECT_TIMEOUT_SEC=1
+```
+
+### 수동 관리 명령어
+```bash
+# DB 상태 점검
+docker exec aurorapass-backend-1 python scripts/inspect_db.py
+
+# 수동 합성 (필요시)
+docker exec aurorapass-backend-1 python scripts/synthesize_captcha.py --count 50
+
+# 마이그레이션 수동 실행
+docker exec aurorapass-backend-1 python scripts/bootstrap.py
+```
+
+### DB 디버깅/모니터링/SQL 실행
+```bash
+# 상세 디버깅 (전체)
+docker exec aurorapass-backend-1 python scripts/debug_db.py
+
+# 재고 상태 빠르게 확인
+docker exec aurorapass-backend-1 python scripts/inspect_db.py
+
+# 상세 디버깅 (섹션별)
+docker exec aurorapass-backend-1 python scripts/debug_db.py schema
+docker exec aurorapass-backend-1 python scripts/debug_db.py captcha
+docker exec aurorapass-backend-1 python scripts/debug_db.py audio
+docker exec aurorapass-backend-1 python scripts/debug_db.py answers
+docker exec aurorapass-backend-1 python scripts/debug_db.py redis
+docker exec aurorapass-backend-1 python scripts/debug_db.py activity
+docker exec aurorapass-backend-1 python scripts/debug_db.py integrity
+
+# 실시간 모니터링 (기본 10초 간격)
+docker exec -it aurorapass-backend-1 python scripts/monitor_db.py
+# 5초 간격
+docker exec -it aurorapass-backend-1 python scripts/monitor_db.py 5
+
+# SQL 실행기 (대화형)
+docker exec -it aurorapass-backend-1 python scripts/sql_runner.py
+
+# SQL 한 번에 실행
+docker exec aurorapass-backend-1 python scripts/sql_runner.py "SELECT COUNT(*) FROM captcha_files"
+
+# Redis 정답 키 확인
+docker exec aurora_redis redis-cli --scan --pattern 'captcha:*'
+docker exec aurora_redis redis-cli TTL captcha:<captchaId>
+```
+
+### 합성 규칙
+- **파일명**: `ko_{koKey}__{enStem}_mix_{YYYYMMDD_HHMMSS}.wav`
+- **중복 방지**: `audio_hash` 기반 ON CONFLICT DO NOTHING
+- **원자적 소비**: FOR UPDATE SKIP LOCKED로 동시성 보장
+- **만료 지원**: `expires_at` 컬럼으로 시한부 CAPTCHA 지원
+
 ## 로컬 개발 (옵션)
 
 Docker 없이 각각 실행할 때:
@@ -280,7 +426,7 @@ Docker 없이 각각 실행할 때:
 ```bash
 # 백엔드 (FastAPI)
 cd backend
-uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload --lifespan on
 
 # 프론트엔드 (Vite + React + TypeScript)  
 cd frontend

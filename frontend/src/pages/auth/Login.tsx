@@ -11,6 +11,7 @@ import { Captcha } from '../../shared/types/login';
 import bgImage from '../../../images/Home_screen_background.jpg';
 import logoImage from '../../../images/logo.jpg';
 import styles from './Login.module.css';
+import { fetchAfterReady } from '../../shared/utils/healthz';
 
 /**
  * LoginPage 컴포넌트 - 사용자 인증을 위한 로그인 페이지
@@ -31,13 +32,13 @@ export default function LoginPage() {
   // 로그인 폼 상태 관리
   const [username, setUsername] = useState(''); // 사용자가 입력한 아이디
   const [password, setPassword] = useState(''); // 사용자가 입력한 비밀번호
-  
+
   // 캡차 관련 상태 관리
   const [captcha, setCaptcha] = useState<Captcha | null>(null); // 서버에서 받은 캡차 정보
   const [captchaInput, setCaptchaInput] = useState(''); // 사용자가 입력한 캡차 답안
   const [captchaMsg, setCaptchaMsg] = useState(''); // 캡차 검증 결과 메시지
   const [captchaVerified, setCaptchaVerified] = useState(false); // 캡차 검증 완료 여부
-  
+
   // 로그인 프로세스 상태 관리
   const [loginMsg, setLoginMsg] = useState(''); // 로그인 결과 메시지
   const [loggingIn, setLoggingIn] = useState(false); // 로그인 진행 중 여부
@@ -50,7 +51,7 @@ export default function LoginPage() {
     setCaptchaMsg('');
     setCaptchaVerified(false);
     setCaptchaInput('');
-    const res = await fetch('/api/captcha/generate');
+    const res = await fetchAfterReady('/api/captcha/generate');
     const data = await res.json();
     setCaptcha(data);
   };
@@ -97,7 +98,7 @@ export default function LoginPage() {
   useEffect(() => { fetchCaptcha(); }, []);
 
   return (
-    <div 
+    <div
       className={styles.loginPage}
       style={{ backgroundImage: `url(${bgImage})` }}
     >

@@ -3,16 +3,16 @@ services:
     image: postgres:15
     container_name: aurora_postgres
     environment:
-      - POSTGRES_DB=aurora
-      - POSTGRES_USER=appuser
-      - POSTGRES_PASSWORD=apppass
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - aurora_pgdata:/var/lib/postgresql/data
       - ./backend/db/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U appuser -d aurora" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -33,19 +33,91 @@ services:
       retries: 20
     networks: [ app-net ]
 
+  migrator:
+    image: postgres:15
+    env_file:
+      - ./.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "[migrator] ensure schema"
+        export PGPASSWORD="$POSTGRES_PASSWORD"
+        until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done
+
+        # 1) 테이블이 없으면 최소 스키마 생성
+        EXISTS=$(psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT to_regclass('public.captcha_files') IS NOT NULL;")
+        if [ "$$EXISTS" != "t" ]; then
+          echo "[migrator] create table captcha_files"
+          psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "
+            CREATE TABLE IF NOT EXISTS captcha_files (
+              id SERIAL PRIMARY KEY,
+              audio_hash TEXT UNIQUE,
+              used BOOLEAN NOT NULL DEFAULT FALSE,
+              expires_at TIMESTAMPTZ
+            );
+          "
+        fi
+
+        # 2) 컬럼/인덱스 보강(있으면 무시)
+        psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS used boolean NOT NULL DEFAULT false;"
+        psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c "ALTER TABLE captcha_files ADD COLUMN IF NOT EXISTS expires_at timestamptz;"
+        psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c 'CREATE UNIQUE INDEX IF NOT EXISTS uq_captcha_files_audio_hash ON captcha_files (audio_hash);'
+
+        echo "[migrator] done."
+    restart: "no"
+    networks: [ app-net ]
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    init: true # tini로 PID1 안정화
+    stop_signal: SIGINT # 정상 종료 시 exit code 0 보장 (uvicorn가 SIGINT=0 처리)
+    stop_grace_period: 30s # 유예 시간
     ports:
-      - "${BACKEND_PORT:-${PORT:-8000}}:${BACKEND_PORT:-${PORT:-8000}}"
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
     volumes:
       - ./backend:/app
+      - ./poc:/app/poc
     env_file:
       - ./.env
     environment:
-      - PORT=${BACKEND_PORT:-${PORT:-8000}}
+      - PORT=${BACKEND_PORT:-8000}
+      - PYTHONPATH=/app
+      - RUN_BOOTSTRAP=${RUN_BOOTSTRAP:-1}
+      # Top-up 스케줄러 설정
+      - TOPUP_ENABLED=${TOPUP_ENABLED:-0}
+      - TOPUP_JOIN_TIMEOUT_SEC=${TOPUP_JOIN_TIMEOUT_SEC:-25}
+      - INVENTORY_TARGET=${INVENTORY_TARGET:-1000}
+      - TOP_UP_INTERVAL_SEC=${TOP_UP_INTERVAL_SEC:-60}
+      - MAX_PER_TICK=${MAX_PER_TICK:-200}
+      - BATCH_SIZE=${BATCH_SIZE:-50}
+      # DB 풀/타임아웃 설정
+      - DB_STATEMENT_TIMEOUT_MS=${DB_STATEMENT_TIMEOUT_MS:-2000}
+      - POOL_SIZE=${POOL_SIZE:-5}
+      - MAX_OVERFLOW=${MAX_OVERFLOW:-10}
+      - POOL_RECYCLE_SEC=${POOL_RECYCLE_SEC:-1800}
+      - POOL_PRE_PING=${POOL_PRE_PING:-1}
+      # 종료 타임아웃 계층
+      - STOP_GRACE_SEC=${STOP_GRACE_SEC:-30}
+    # Dockerfile의 CMD(/app/entrypoint.sh)를 사용해 신호 처리 및 종료코드 0 보장
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
+      migrator:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -55,17 +127,22 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "${FRONT_PORT:-${PORT:-3000}}:${FRONT_PORT:-${PORT:-3000}}"
+      - "${FRONT_PORT:-3000}:${FRONT_PORT:-3000}"
     env_file:
       - ./.env
     environment:
-      - FRONT_PORT=${FRONT_PORT:-${PORT:-3000}}
-      - BACKEND_PORT=${BACKEND_PORT:-${PORT:-8000}}
-      - PORT=${FRONT_PORT:-${PORT:-3000}}
+      - FRONT_PORT=${FRONT_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - PORT=${FRONT_PORT:-3000}
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: sh -lc "bun install && bun run dev"
+    command:
+      - sh
+      - -lc
+      - |
+        bun install
+        bun run dev
     depends_on:
       - backend
     networks: [ app-net ]

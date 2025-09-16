@@ -19,15 +19,26 @@ export default defineConfig({
     port: Number(process.env.FRONT_PORT || process.env.PORT || 3000),
     host: true, // 모든 네트워크 인터페이스에서 접근 가능하도록 설정
     proxy: {
+      // 백엔드 헬스 체크 경로를 프록시해 프런트 코드에서 '/api/healthz' 호출로 백엔드 '/healthz'에 도달하도록 함
+      '/api/healthz': {
+        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/healthz$/, '/healthz'),
+      },
+      '/api/readyz': {
+        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/readyz$/, '/readyz'),
+      },
       // API 요청을 백엔드 서버로 프록시 (CORS 문제 해결)
-      '/api': { 
-        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`, 
-        changeOrigin: true 
+      '/api': {
+        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`,
+        changeOrigin: true
       },
       // 정적 파일 요청을 백엔드 서버로 프록시
-      '/static': { 
-        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`, 
-        changeOrigin: true 
+      '/static': {
+        target: `http://backend:${process.env.BACKEND_PORT || process.env.PORT || 8000}`,
+        changeOrigin: true
       },
     },
   },

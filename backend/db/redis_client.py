@@ -1,6 +1,7 @@
 import os
+import json
 import redis
-from typing import Optional
+from typing import Optional, Dict, Any
 
 REDIS_URL = os.getenv("REDIS_URL")
 if not REDIS_URL:
@@ -8,8 +9,13 @@ if not REDIS_URL:
         "REDIS_URL is not set; please provide it via .env or environment variables."
     )
 
-# Redis client instance
-redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+# Redis client instance with short socket timeouts to prevent readiness blocking
+redis_client = redis.from_url(
+    REDIS_URL,
+    decode_responses=True,
+    socket_timeout=float(os.getenv("REDIS_SOCKET_TIMEOUT_SEC", "1.0")),
+    socket_connect_timeout=float(os.getenv("REDIS_CONNECT_TIMEOUT_SEC", "1.0")),
+)
 
 
 def ping_redis() -> bool:
@@ -73,3 +79,35 @@ def consume_captcha_unlock(user_id: str) -> bool:
     """Consume one-time unlock"""
     key = f"unlock:{user_id}"
     return redis_client.delete(key) > 0
+
+
+# Idempotency helpers
+def get_idempotent_payload(key: str) -> Optional[Dict[str, Any]]:
+    """Get cached idempotent response payload by key."""
+    raw = redis_client.get(f"idemp:{key}")
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
+def set_idempotent_payload(key: str, payload: Dict[str, Any], ttl_seconds: int = 30) -> None:
+    """Cache idempotent response payload by key with TTL."""
+    redis_client.setex(f"idemp:{key}", ttl_seconds, json.dumps(payload, ensure_ascii=False))
+
+
+# Last response helpers (per fingerprint) to absorb quick duplicates without re-consumption
+def get_last_generate_payload(fingerprint: str) -> Optional[Dict[str, Any]]:
+    raw = redis_client.get(f"lastgen:{fingerprint}")
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
+def set_last_generate_payload(fingerprint: str, payload: Dict[str, Any], ttl_seconds: int = 5) -> None:
+    redis_client.setex(f"lastgen:{fingerprint}", ttl_seconds, json.dumps(payload, ensure_ascii=False))
