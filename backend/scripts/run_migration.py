@@ -8,6 +8,7 @@ from pathlib import Path
 from db.session import get_db_session
 from sqlalchemy import text
 
+
 def run_migration(sql_file_path: str):
     """지정된 SQL 파일을 실행합니다."""
     if not Path(sql_file_path).exists():
@@ -34,16 +35,14 @@ def run_migration(sql_file_path: str):
         print(f" 마이그레이션 실패: {e}")
         return False
 
+
 def run_all_migrations():
     """모든 마이그레이션을 순서대로 실행합니다."""
     script_dir = Path(__file__).parent
     init_dir = script_dir.parent / "db" / "init"
     
-    # 마이그레이션 파일들을 순서대로 정렬
-    migration_files = sorted([
-        f for f in init_dir.glob("*.sql") 
-        if f.name.startswith(('01_', '02_', '03_'))
-    ])
+    # 마이그레이션 파일들을 순서대로 정렬 (모든 *.sql 대상)
+    migration_files = sorted(init_dir.glob("*.sql"), key=lambda f: f.name)
     
     if not migration_files:
         print(" 마이그레이션 파일을 찾을 수 없습니다.")
@@ -66,6 +65,7 @@ def run_all_migrations():
     else:
         print(f"\n 마이그레이션이 부분적으로 실패했습니다. ({success_count}/{len(migration_files)})")
         return False
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

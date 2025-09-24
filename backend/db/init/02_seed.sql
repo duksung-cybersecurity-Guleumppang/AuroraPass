@@ -6,11 +6,16 @@ ON CONFLICT (id) DO NOTHING;
 -- Demo courses matching the JSON data
 INSERT INTO courses (id, title, capacity, enrolled_count)
 VALUES
-  ('CS5501', '졸린데안졸린척하는법', 2, 0),
-  ('CS101', '컴퓨터개론', 2, 0),
-  ('CS201', '자료구조', 1, 0),
-  ('CS301', '운영체제', 1, 0),
-  ('CS5401', '사이버보안개론', 3, 0)
-ON CONFLICT (id) DO NOTHING;
+  ('CS5501', '디지털포렌식', 60, 0),
+  ('CS5502', '악성코드분석', 70, 0),
+  ('CS5503', '네트워크보안', 80, 0),
+  ('CS5504', '암호학개론', 100, 0),
+  ('CS5505', '보안프로그래밍', 60, 0),
+  ('CS5506', '취약점분석과대응', 70, 0),
+  ('CS5507', '클라우드보안', 80, 0),
+  ('CS5508', '침해사고대응', 60, 0),
+  ('CS5509', '블록체인보안', 90, 0),
+  ('CS5510', '보안정책과윤리', 100, 0)
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, capacity = EXCLUDED.capacity;
 
 
