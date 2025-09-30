@@ -12,6 +12,9 @@ dc() {
   fi
 }
 
+echo "[ApplicationStart] reset infra (DEV ONLY) - down with volumes"
+dc --env-file .env down -v --remove-orphans || true
+
 echo "[ApplicationStart] bring up infra (db/redis)"
 dc --env-file .env up -d postgres redis
 
