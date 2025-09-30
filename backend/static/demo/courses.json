@@ -1,44 +1,82 @@
 [
   {
     "courseId": "CS5501",
-    "title": "졸린데안졸린척하는법",
-    "professor": "대김희연",
-    "schedule": "월 9:00-15:30",
-    "capacity": 2,
-    "enrolled": 0
-  },
-  {
-    "courseId": "CS101",
-    "title": "컴퓨터개론",
-    "professor": "김교수",
-    "schedule": "월 09:00-10:30",
-    "capacity": 2,
-    "enrolled": 0
-  },
-  {
-    "courseId": "CS201",
-    "title": "자료구조",
+    "title": "디지털포렌식",
     "professor": "박교수",
-    "schedule": "화 10:30-12:00",
-    "capacity": 1,
+    "schedule": "월 09:00-10:30",
+    "capacity": 60,
     "enrolled": 0
   },
   {
-    "courseId": "CS301",
-    "title": "운영체제",
+    "courseId": "CS5502",
+    "title": "악성코드분석",
     "professor": "이교수",
-    "schedule": "수 13:00-14:30",
-    "capacity": 1,
+    "schedule": "화 13:00-14:30",
+    "capacity": 70,
     "enrolled": 0
   },
   {
-    "courseId": "CS5401",
-    "title": "사이버보안개론",
-    "professor": "킹갓김희연",
-    "schedule": "목 13:00-14:30",
-    "capacity": 3,
+    "courseId": "CS5503",
+    "title": "네트워크보안",
+    "professor": "최교수",
+    "schedule": "수 10:00-11:30",
+    "capacity": 80,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5504",
+    "title": "암호학개론",
+    "professor": "정교수",
+    "schedule": "목 15:00-16:30",
+    "capacity": 100,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5505",
+    "title": "보안프로그래밍",
+    "professor": "한교수",
+    "schedule": "금 13:00-14:30",
+    "capacity": 60,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5506",
+    "title": "취약점분석과대응",
+    "professor": "조교수",
+    "schedule": "월 15:00-16:30",
+    "capacity": 70,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5507",
+    "title": "클라우드보안",
+    "professor": "윤교수",
+    "schedule": "화 09:00-10:30",
+    "capacity": 80,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5508",
+    "title": "침해사고대응",
+    "professor": "강교수",
+    "schedule": "수 13:00-14:30",
+    "capacity": 60,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5509",
+    "title": "블록체인보안",
+    "professor": "신교수",
+    "schedule": "목 09:00-10:30",
+    "capacity": 90,
+    "enrolled": 0
+  },
+  {
+    "courseId": "CS5510",
+    "title": "보안정책과윤리",
+    "professor": "김교수",
+    "schedule": "금 10:00-11:30",
+    "capacity": 100,
     "enrolled": 0
   }
 ]
-
-

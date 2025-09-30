@@ -6,12 +6,12 @@
 
 ### **PostgreSQL 15** (관계형 데이터)
 - **8개 테이블**: users, courses, carts, cart_items, enrollments, **captcha_files**, **audio_sources**, **ko_source_answers**
-- **현재 데이터**: 1명 사용자, 5개 강의, CAPTCHA 오디오 시스템(합성 지원), 1건 수강신청
+- **현재 데이터**: 1명 사용자, 10개 강의, CAPTCHA 오디오 시스템(합성 지원), 1건 수강신청
 
 | 테이블 | 용도 | 레코드 수 |
 |---|---|---|
 | `users` | 사용자 정보 (UUID, username, email, password_hash) | 1 |
-| `courses` | 강의 정보 (id, title, capacity, enrolled_count) | 5 |
+| `courses` | 강의 정보 (id, title, capacity, enrolled_count) | 10 |
 | `captcha_files` | **CAPTCHA 오디오 파일** (id, filename, answer, audio_data, 합성 메타데이터) | 가변 |
 | `audio_sources` | **원본 오디오 소스** (한글/영어, bytea 저장) | 가변 |
 | `ko_source_answers` | **한글 소스 정답 매핑** (파일명 → 질문/정답) | 가변 |
@@ -299,7 +299,7 @@ curl http://localhost:8000/api/captcha/audio/sample1 --output test.wav
 # 장바구니 추가
 curl -X POST http://localhost:8000/api/cart \
   -H "Content-Type: application/json" \
-  -d '{"courseId": "CS101"}'
+  -d '{"courseId": "CS5501"}'
 
 # 수강신청
 curl -X POST http://localhost:8000/api/enroll
