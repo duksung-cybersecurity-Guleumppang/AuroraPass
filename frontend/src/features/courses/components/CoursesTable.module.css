@@ -4,19 +4,30 @@
 
 /* 테이블 헤더 스타일 */
 .tableHeader {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+  color: #1e293b;
 }
 
 /* 수강신청 버튼 스타일 */
 .enrollButton {
   font-size: 12px;
-  padding: 4px 8px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  padding: 6px 12px;
+  background: #3b82f6;
   color: white;
   border: none;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.enrollButton:hover {
+  background: #2563eb;
 }
 
 .enrollButtonDisabled {
+  font-size: 12px;
+  padding: 6px 12px;
   background: #cbd5e1;
+  color: #94a3b8;
+  border: none;
+  border-radius: 6px;
 }

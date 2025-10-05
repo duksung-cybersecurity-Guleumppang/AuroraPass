@@ -68,6 +68,11 @@ export default function CaptchaModal({
           <input
             value={captchaInput}
             onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onSubmit();
+              }
+            }}
             placeholder="ENTER ANSWER"
             className={styles.captchaInput}
           />
@@ -82,8 +87,6 @@ export default function CaptchaModal({
         
         {/* 모달 액션 버튼 */}
         <div className={styles.captchaModalActions}>
-          {/* 모달 닫기 버튼 */}
-          <button onClick={onClose} className={styles.captchaCloseButton}>CLOSE</button>
         </div>
       </div>
     </div>

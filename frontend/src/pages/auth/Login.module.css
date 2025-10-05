@@ -6,8 +6,10 @@
 /* 로그인 페이지 전체 컨테이너 */
 .loginPage {
     min-height: 100vh;
-    background-size: cover;
+    background-size: contain;
     background-position: center;
+    background-repeat: no-repeat;
+    background-color: #1a1a2e;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -134,4 +136,52 @@
 .loginMessage {
     margin-top: 8px;
     font-size: 13px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .loginPage {
+        padding: 16px;
+    }
+
+    .loginFormContainer {
+        width: 100%;
+        max-width: 420px;
+        padding: 20px;
+    }
+
+    .loginLogo {
+        width: 100px;
+    }
+
+    .loginTitle {
+        font-size: 18px;
+    }
+
+    .formInput,
+    .captchaInputField {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .loginFormContainer {
+        padding: 16px;
+    }
+
+    .loginLogo {
+        width: 80px;
+    }
+
+    .loginTitle {
+        font-size: 16px;
+    }
+
+    .captchaInputRow {
+        flex-direction: column;
+    }
+
+    .captchaVerifyBtn {
+        width: 100%;
+    }
 }

@@ -47,14 +47,6 @@ export default function CoursesHeader({ cart, loading, onLogout, onEnroll }: Cou
           로그아웃
         </button>
         
-        {/* 헤더의 수강신청 버튼 (빠른 접근용) */}
-        <button
-          onClick={onEnroll}
-          disabled={loading || cart.length === 0}
-          className={`${styles.buttonBase} ${styles.enrollButton} ${(loading || cart.length === 0) ? styles.enrollButtonDisabled : ''}`}
-        >
-          {getButtonText(loading, '수강신청', ENROLLMENT_MESSAGES.LOADING)}
-        </button>
       </div>
     </header>
   );

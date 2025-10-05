@@ -47,26 +47,36 @@
 
 /* 버튼 기본 스타일 */
 .buttonBase {
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid transparent;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .logoutButton {
-    background: #331a14;
+    background: #475569;
     color: #fff;
 }
 
+.logoutButton:hover {
+    background: #334155;
+}
+
 .enrollButton {
-    background: #b70050;
+    background: #3b82f6;
     color: #fff;
+}
+
+.enrollButton:hover {
+    background: #2563eb;
 }
 
 .enrollButtonDisabled {
     background: #cbd5e1;
     cursor: not-allowed;
+    color: #94a3b8;
 }
 
 /* 메인 콘텐츠 레이아웃 */
@@ -75,7 +85,7 @@
     flex-direction: column;
     gap: 24px;
     padding: 24px;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
 }
 
@@ -197,23 +207,25 @@
 }
 
 .table th {
-    background: #f8fafc;
-    padding: 12px 16px;
+    background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+    padding: 14px 16px;
     text-align: left;
     font-weight: 600;
     font-size: 14px;
-    color: #374151;
-    border-bottom: 2px solid #e2e8f0;
+    color: #1e293b;
+    border-bottom: 2px solid #cbd5e1;
 }
 
 .table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e5e7eb;
     vertical-align: middle;
+    color: #374151;
 }
 
 .table tbody tr:hover {
-    background: #f8fafc;
+    background: #f0f9ff;
+    transition: background-color 0.2s;
 }
 
 .courseTitle {
@@ -243,14 +255,19 @@
 }
 
 .addToCartButton {
-    background: #ffd61c;
-    color: #000;
+    background: #10b981;
+    color: #fff;
+}
+
+.addToCartButton:hover {
+    background: #059669;
 }
 
 .addToCartButton:disabled,
 .addToCartButtonDisabled {
     background: #cbd5e1;
     cursor: not-allowed;
+    color: #94a3b8;
 }
 
 /* 장바구니 사이드바 */
@@ -266,10 +283,10 @@
 
 .cartContainer, .enrolledContainer {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 18px;
 }
 
 .cartTitle, .enrolledTitle {
@@ -297,10 +314,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.cartItem:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .cartItemTitle {
@@ -314,8 +336,12 @@
 }
 
 .removeButton {
-    background: #1e40af;
+    background: #ef4444;
     color: #fff;
+}
+
+.removeButton:hover {
+    background: #dc2626;
 }
 
 .cartEnrollButton {
@@ -416,4 +442,117 @@
     color: #fff;
     font-weight: 600;
     cursor: pointer;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .coursesContent {
+        max-width: 100%;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .coursesHeader {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .headerActions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .headerActions button {
+        width: 100%;
+    }
+
+    .coursesContent {
+        padding: 12px;
+        gap: 16px;
+    }
+
+    .filterRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filterGroup {
+        width: 100%;
+    }
+
+    .filterSelect,
+    .filterInput {
+        width: 100%;
+    }
+
+    .radioGroup {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .coursesTable {
+        overflow-x: auto;
+    }
+
+    .table {
+        min-width: 800px;
+    }
+
+    .cartSidebar,
+    .enrolledSidebar {
+        margin-top: 16px;
+    }
+
+    .captchaModalContent {
+        width: 90%;
+        max-width: 420px;
+    }
+}
+
+@media (max-width: 480px) {
+    .coursesHeader {
+        padding: 12px 16px;
+    }
+
+    .headerTitle {
+        font-size: 18px;
+    }
+
+    .coursesContent {
+        padding: 8px;
+    }
+
+    .searchFilterBox {
+        padding: 12px;
+    }
+
+    .filterGroup label {
+        font-size: 13px;
+    }
+
+    .filterSelect,
+    .filterInput,
+    .searchButton {
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+
+    .table th,
+    .table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .cartContainer,
+    .enrolledContainer {
+        padding: 12px;
+    }
+
+    .captchaModalContent {
+        width: 95%;
+        padding: 12px;
+    }
 }

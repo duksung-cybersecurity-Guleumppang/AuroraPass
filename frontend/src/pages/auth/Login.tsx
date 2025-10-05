@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Captcha } from '../../shared/types/login';
-import bgImage from '../../../images/Home_screen_background.jpg';
+import bgImage from '../../../images/Home_screen_background2.jpg';
 import logoImage from '../../../images/logo.jpg';
 import styles from './Login.module.css';
 import { fetchAfterReady } from '../../shared/utils/healthz';

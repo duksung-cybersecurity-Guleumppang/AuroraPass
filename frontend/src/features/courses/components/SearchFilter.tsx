@@ -20,7 +20,7 @@ export default function SearchFilter() {
         <div className={styles.filterGroup}>
           <label>학년도 <span className={styles.required}>*</span></label>
           <select className={styles.filterSelect}>
-            <option value="2024">2024</option>
+            <option value="2025">2025</option>
           </select>
         </div>
         
@@ -86,7 +86,7 @@ export default function SearchFilter() {
           <select className={styles.filterSelect}>
             <option value="">선택하세요</option>
             <option value="사이버보안전공">사이버보안전공</option>
-            <option value="컴퓨터공학과">컴퓨터공학과</option>
+            <option value="디지털소프트웨어공학부">디지털소프트웨어공학부</option>
           </select>
         </div>
       </div>

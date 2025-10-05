@@ -177,11 +177,16 @@ export function useCourses(): UseCoursesReturn {
       const okCount = successfulResults.length;
       const failCount = results.length - okCount;
 
-      // 신청한 모든 과목들을 enrolledCourses에 저장 (성공/실패 무관)
+      // 신청한 모든 과목들을 enrolledCourses에 저장 (성공/실패 무관, 중복 제거)
       const enrolledCourses = cart.filter(course =>
         results.some((r: any) => r.courseId === course.courseId)
       );
-      setEnrolledCourses(prev => [...prev, ...enrolledCourses]);
+      setEnrolledCourses(prev => {
+        const newCourses = enrolledCourses.filter(
+          course => !prev.some(enrolled => enrolled.courseId === course.courseId)
+        );
+        return [...prev, ...newCourses];
+      });
 
       setMessage(formatEnrollmentResult(okCount, failCount));
       await fetchCourses();
@@ -193,7 +198,7 @@ export function useCourses(): UseCoursesReturn {
 
   /**
    * 캡차 인증을 제출하는 함수
-   * 캡차 인증 성공 시 수강신청을 재시도합니다.
+   * 캡차 인증 성공 시 수강신청 완료 처리를 합니다.
    */
   const submitCaptcha = async () => {
     if (!captchaModal.captchaId) return;
@@ -209,8 +214,18 @@ export function useCourses(): UseCoursesReturn {
       setCaptchaInput('');
       setUiCaptchaRequired(false);
       clickTimesRef.current = [];
-      // 캡차 인증 성공 후 수강신청 재시도
-      await enroll();
+
+      // 현재 cart에 있는 강의들을 enrolledCourses에 추가
+      setEnrolledCourses(prev => {
+        const newCourses = cart.filter(
+          course => !prev.some(enrolled => enrolled.courseId === course.courseId)
+        );
+        return [...prev, ...newCourses];
+      });
+
+      setMessage(`수강신청 완료: ${cart.length}개 과목`);
+      await fetchCourses();
+      await fetchCart();
     } else {
       setCaptchaMsg(data?.message || CAPTCHA_MESSAGES.VERIFICATION_FAILED);
     }

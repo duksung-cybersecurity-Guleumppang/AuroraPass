@@ -58,11 +58,19 @@ export default function CoursesMainContent({
   return (
     <div className={styles.coursesContent}>
       <section>
+        {/* 강의 검색 필터 헤더 */}
+        <div className={styles.coursesListHeader}>
+          <div>
+            <div className={styles.coursesListTitle}>강의 검색</div>
+            <div className={styles.coursesListSubtitle}>학년도, 학기, 전공/학과를 선택하여 강의를 검색하세요.</div>
+          </div>
+        </div>
+
         {/* 강의 검색 필터 */}
         <SearchFilter />
 
         {/* 개설과목 목록 헤더 */}
-        <div className={styles.coursesListHeader}>
+        <div className={styles.coursesListHeader} style={{ marginTop: '24px' }}>
           <div>
             <div className={styles.coursesListTitle}>개설과목 목록</div>
             <div className={styles.coursesListSubtitle}>정원/시간표 확인 후 체크박스로 선택하여 수강신청하세요.</div>
