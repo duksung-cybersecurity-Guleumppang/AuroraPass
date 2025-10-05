@@ -15,6 +15,7 @@ import react from '@vitejs/plugin-react-swc';
 export default defineConfig({
   plugins: [react()], // React SWC 플러그인 사용 (빠른 개발 서버와 HMR 제공)
   server: {
+    allowedHosts: ['54-180-122-26.nip.io'],
     // 개발 서버 포트 설정 (환경변수 FRONT_PORT > PORT > 기본값 3000)
     port: Number(process.env.FRONT_PORT || process.env.PORT || 3000),
     host: true, // 모든 네트워크 인터페이스에서 접근 가능하도록 설정
