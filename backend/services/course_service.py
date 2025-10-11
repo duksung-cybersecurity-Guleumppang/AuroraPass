@@ -6,28 +6,11 @@ from repositories.course_repository import course_repository
 
 
 def _load_demo_courses() -> List[Course]:
-    """Load demo courses from curated JSON if present, else fallback to default"""
+    """Load demo courses only from curated JSON (single source of truth)."""
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static", "demo"))
-    # Allow ENV override
-    env_override = os.environ.get("CURATED_COURSES_JSON")
-    candidate_paths = []
-    if env_override:
-        candidate_paths.append(env_override)
-    candidate_paths.append(os.path.join(base_dir, "courses_curated.json"))
-    candidate_paths.append(os.path.join(base_dir, "courses.json"))
-
-    path_to_use = None
-    for p in candidate_paths:
-        try:
-            if os.path.exists(p):
-                path_to_use = p
-                break
-        except Exception:
-            continue
-
-    if not path_to_use:
+    path_to_use = os.environ.get("CURATED_COURSES_JSON") or os.path.join(base_dir, "courses_curated.json")
+    if not os.path.exists(path_to_use):
         return []
-
     with open(path_to_use, "r", encoding="utf-8") as f:
         data = json.load(f)
     return [Course(**c) for c in data]
