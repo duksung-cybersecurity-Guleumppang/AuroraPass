@@ -36,7 +36,7 @@ interface CoursesMainContentProps {
   onRemoveFromCart: (courseId: string) => void;
   onEnroll: () => void;
   onCancelEnrollment: (courseId: string) => void;
-  onSearch: (params: { keyword?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc' }) => void;
+  onSearch: (params: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc' }) => void;
 }
 
 /**

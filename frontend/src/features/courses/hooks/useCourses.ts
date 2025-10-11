@@ -157,6 +157,17 @@ export function useCourses(): UseCoursesReturn {
   };
 
   /**
+   * 서버에서 나의 수강 목록을 가져오는 함수
+   */
+  const fetchMyCourses = async () => {
+    const res = await fetch('/api/my-courses');
+    let data: any = [];
+    try { data = await res.json(); } catch { }
+    if (openCaptchaIfNeeded(data)) return;
+    setEnrolledCourses(Array.isArray(data) ? data : []);
+  };
+
+  /**
    * 강의를 장바구니에 추가하는 함수
    * @param {string} courseId - 추가할 강의 ID
    */
@@ -216,6 +227,7 @@ export function useCourses(): UseCoursesReturn {
       setMessage(formatEnrollmentResult(okCount, failCount));
       await fetchCourses();
       await fetchCart();
+      await fetchMyCourses();
     } finally {
       setLoading(false);
     }
@@ -252,6 +264,7 @@ export function useCourses(): UseCoursesReturn {
       setMessage(`수강신청 완료: ${cart.length}개 과목`);
       await fetchCourses();
       await fetchCart();
+      await fetchMyCourses();
     } else {
       setCaptchaMsg(data?.message || CAPTCHA_MESSAGES.VERIFICATION_FAILED);
     }
@@ -272,6 +285,7 @@ export function useCourses(): UseCoursesReturn {
   useEffect(() => {
     fetchCourses();
     fetchCart();
+    fetchMyCourses();
   }, []);
 
   // 장바구니에 담긴 강의 ID들을 Set으로 변환 (성능 최적화)
@@ -295,6 +309,7 @@ export function useCourses(): UseCoursesReturn {
     fetchCourses,
     searchCourses,
     fetchCart,
+    fetchMyCourses,
     addToCart,
     removeFromCart,
     enroll,

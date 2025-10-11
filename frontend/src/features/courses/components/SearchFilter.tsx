@@ -15,11 +15,12 @@ type SearchParams = { keyword?: string; year?: number; semester?: number; level?
 
 export default function SearchFilter({ onSearch }: { onSearch: (params: SearchParams) => void; }) {
   const [keyword, setKeyword] = useState('');
-  const [semester, setSemester] = useState('1');
-  const [year, setYear] = useState('2025');
+  const [semester, setSemester] = useState('');
+  const [year, setYear] = useState('');
   const [level, setLevel] = useState('');
   const [category, setCategory] = useState('');
   const [department, setDepartment] = useState('');
+  const [searchType, setSearchType] = useState<'dept' | 'area' | 'keyword'>('dept');
   const [departments, setDepartments] = useState<string[]>([]);
 
   useEffect(() => {
@@ -55,6 +56,8 @@ export default function SearchFilter({ onSearch }: { onSearch: (params: SearchPa
       order: 'desc'
     });
   };
+
+
   return (
     <div className={styles.searchFilterBox}>
       {/* 첫 번째 필터 행: 기본 검색 조건들 */}

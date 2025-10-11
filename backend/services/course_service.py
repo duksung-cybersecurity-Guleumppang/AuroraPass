@@ -52,7 +52,9 @@ class CourseService:
             semester=semester,
             level=level,
             category=category,
-            department=department,
+            # DB에는 부서 정보가 없을 수 있어 DB 단계에서는 부서 필터를 적용하지 않고,
+            # 머지 후 표시 데이터 기준으로 필터링한다.
+            department=None,
             sort=sort,
             order=order,
             limit=limit,
@@ -101,6 +103,19 @@ class CourseService:
                     category=db_course.get("category"),
                 )
             result.append(course_data)
+        
+        # 표시 데이터에 부서 정보가 있을 때, 요청된 부서로 최종 필터링
+        if department:
+            dep_norm = department.strip()
+            def _match_dep(dep_val: Optional[str]) -> bool:
+                if not dep_val:
+                    return False
+                if dep_val == dep_norm:
+                    return True
+                # 사용자가 접두어만 입력한 경우(예: "사이버보안" vs "사이버보안전공") 대응
+                return dep_val.startswith(dep_norm)
+
+            result = [c for c in result if _match_dep(getattr(c, 'department', None))]
         
         return result
 
