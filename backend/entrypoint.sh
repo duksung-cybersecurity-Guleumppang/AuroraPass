@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -eux
 
 PORT="${PORT:-8000}"
 
@@ -23,12 +23,6 @@ else
 fi
 
 echo "[entrypoint] starting uvicorn on port ${PORT}"
-uvicorn main:app --host 0.0.0.0 --port "${PORT}" --lifespan on --access-log &
-UVICORN_PID=$!
-
-wait "$UVICORN_PID"
-EXIT_CODE=$?
-echo "[entrypoint] uvicorn exited with code ${EXIT_CODE}"
-exit ${EXIT_CODE}
+exec python -m uvicorn main:app --host 0.0.0.0 --port "${PORT}" --lifespan on --access-log
 
 

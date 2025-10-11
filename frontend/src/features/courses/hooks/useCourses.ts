@@ -32,6 +32,7 @@ export interface UseCoursesReturn {
 
   // 액션 함수들
   fetchCourses: () => Promise<void>;
+  searchCourses: (params?: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc'; }) => Promise<void>;
   fetchCart: () => Promise<void>;
   addToCart: (courseId: string) => Promise<void>;
   removeFromCart: (courseId: string) => Promise<void>;
@@ -122,6 +123,29 @@ export function useCourses(): UseCoursesReturn {
   };
 
   /**
+   * 검색 파라미터로 강의 목록을 조회
+   */
+  const searchCourses = async (params?: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc'; }) => {
+    const q = new URLSearchParams();
+    if (params?.keyword) q.set('keyword', params.keyword);
+    if (params?.year !== undefined) q.set('year', String(params.year));
+    if (params?.semester !== undefined) q.set('semester', String(params.semester));
+    if (params?.level) q.set('level', params.level);
+    if (params?.category) q.set('category', params.category);
+    if (params?.department) q.set('department', params.department);
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.pageSize) q.set('pageSize', String(params.pageSize));
+    if (params?.sort) q.set('sort', params.sort);
+    if (params?.order) q.set('order', params.order);
+    const qs = q.toString();
+    const res = await fetch(`/api/courses${qs ? `?${qs}` : ''}`);
+    let data: any = [];
+    try { data = await res.json(); } catch { }
+    if (openCaptchaIfNeeded(data)) return;
+    setCourses(Array.isArray(data) ? data : []);
+  };
+
+  /**
    * 장바구니 목록을 서버에서 가져오는 함수
    */
   const fetchCart = async () => {
@@ -130,6 +154,17 @@ export function useCourses(): UseCoursesReturn {
     try { data = await res.json(); } catch { }
     if (openCaptchaIfNeeded(data)) return;
     setCart(Array.isArray(data) ? data : []);
+  };
+
+  /**
+   * 서버에서 나의 수강 목록을 가져오는 함수
+   */
+  const fetchMyCourses = async () => {
+    const res = await fetch('/api/my-courses');
+    let data: any = [];
+    try { data = await res.json(); } catch { }
+    if (openCaptchaIfNeeded(data)) return;
+    setEnrolledCourses(Array.isArray(data) ? data : []);
   };
 
   /**
@@ -178,9 +213,10 @@ export function useCourses(): UseCoursesReturn {
       const failCount = results.length - okCount;
 
       // 신청한 모든 과목들을 enrolledCourses에 저장 (성공/실패 무관, 중복 제거)
-      const enrolledCourses = cart.filter(course =>
-        results.some((r: any) => r.courseId === course.courseId)
-      );
+      const enrolledCourses = cart
+        .filter(course => results.some((r: any) => r.courseId === course.courseId))
+        // UI 표시용: 본인 신청 반영해 신청 인원 +1로 표시
+        .map(course => ({ ...course, enrolled: (course.enrolled ?? 0) + 1 }));
       setEnrolledCourses(prev => {
         const newCourses = enrolledCourses.filter(
           course => !prev.some(enrolled => enrolled.courseId === course.courseId)
@@ -191,6 +227,7 @@ export function useCourses(): UseCoursesReturn {
       setMessage(formatEnrollmentResult(okCount, failCount));
       await fetchCourses();
       await fetchCart();
+      await fetchMyCourses();
     } finally {
       setLoading(false);
     }
@@ -217,15 +254,17 @@ export function useCourses(): UseCoursesReturn {
 
       // 현재 cart에 있는 강의들을 enrolledCourses에 추가
       setEnrolledCourses(prev => {
-        const newCourses = cart.filter(
-          course => !prev.some(enrolled => enrolled.courseId === course.courseId)
-        );
+        const newCourses = cart
+          .filter(course => !prev.some(enrolled => enrolled.courseId === course.courseId))
+          // UI 표시용: 본인 신청 반영해 신청 인원 +1로 표시
+          .map(course => ({ ...course, enrolled: (course.enrolled ?? 0) + 1 }));
         return [...prev, ...newCourses];
       });
 
       setMessage(`수강신청 완료: ${cart.length}개 과목`);
       await fetchCourses();
       await fetchCart();
+      await fetchMyCourses();
     } else {
       setCaptchaMsg(data?.message || CAPTCHA_MESSAGES.VERIFICATION_FAILED);
     }
@@ -246,6 +285,7 @@ export function useCourses(): UseCoursesReturn {
   useEffect(() => {
     fetchCourses();
     fetchCart();
+    fetchMyCourses();
   }, []);
 
   // 장바구니에 담긴 강의 ID들을 Set으로 변환 (성능 최적화)
@@ -267,7 +307,9 @@ export function useCourses(): UseCoursesReturn {
 
     // 함수들
     fetchCourses,
+    searchCourses,
     fetchCart,
+    fetchMyCourses,
     addToCart,
     removeFromCart,
     enroll,

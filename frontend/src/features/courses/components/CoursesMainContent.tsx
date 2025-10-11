@@ -36,6 +36,7 @@ interface CoursesMainContentProps {
   onRemoveFromCart: (courseId: string) => void;
   onEnroll: () => void;
   onCancelEnrollment: (courseId: string) => void;
+  onSearch: (params: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc' }) => void;
 }
 
 /**
@@ -53,7 +54,8 @@ export default function CoursesMainContent({
   onAddToCart,
   onRemoveFromCart,
   onEnroll,
-  onCancelEnrollment
+  onCancelEnrollment,
+  onSearch,
 }: CoursesMainContentProps) {
   return (
     <div className={styles.coursesContent}>
@@ -67,7 +69,7 @@ export default function CoursesMainContent({
         </div>
 
         {/* 강의 검색 필터 */}
-        <SearchFilter />
+        <SearchFilter onSearch={onSearch} />
 
         {/* 개설과목 목록 헤더 */}
         <div className={styles.coursesListHeader} style={{ marginTop: '24px' }}>
@@ -78,7 +80,7 @@ export default function CoursesMainContent({
         </div>
 
         {/* 강의 목록 테이블 */}
-        <CoursesTable 
+        <CoursesTable
           courses={courses}
           cartIdSet={cartIdSet}
           onAddToCart={onAddToCart}
@@ -86,7 +88,7 @@ export default function CoursesMainContent({
       </section>
 
       {/* 장바구니 사이드바 */}
-      <Cart 
+      <Cart
         cart={cart}
         loading={loading}
         message={message}
@@ -95,8 +97,8 @@ export default function CoursesMainContent({
       />
 
       {/* 수강신청 완료된 과목 목록 */}
-      <EnrolledCourses 
-        enrolledCourses={enrolledCourses} 
+      <EnrolledCourses
+        enrolledCourses={enrolledCourses}
         onCancelEnrollment={onCancelEnrollment}
       />
     </div>

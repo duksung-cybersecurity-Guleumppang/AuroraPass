@@ -1,5 +1,6 @@
 from typing import List, Union
-from fastapi import APIRouter, HTTPException, Path, status
+from fastapi import APIRouter, HTTPException, Path, status, Query
+from typing import Optional
 
 from models.course_models import Course, CartAddRequest, EnrollResponse, CaptchaRequiredResponse
 from models.captcha_models import CaptchaVerifyRequest
@@ -25,12 +26,34 @@ def _rate_check_and_captcha(user_id: str):
 
 
 @router.get("/courses", summary="강의 목록 조회")
-async def get_courses():
+async def get_courses(
+    keyword: Optional[str] = Query(None, description="과목명 키워드(부분 일치)"),
+    year: Optional[int] = Query(None, description="학년도"),
+    semester: Optional[int] = Query(None, ge=1, le=2, description="학기: 1|2"),
+    level: Optional[str] = Query(None, description="교과목 수준(학사|석사)"),
+    category: Optional[str] = Query(None, description="이수구분(전필|전선|교양)"),
+    department: Optional[str] = Query(None, description="개설전공/학과"),
+    page: Optional[int] = Query(None, ge=1, description="페이지 번호(1-base)"),
+    pageSize: Optional[int] = Query(None, ge=1, le=100, description="페이지 크기(최대 100)"),
+    sort: Optional[str] = Query(None, pattern="^(recent|name|code)$", description="정렬 키: recent|name|code"),
+    order: Optional[str] = Query(None, pattern="^(asc|desc)$", description="정렬 순서: asc|desc"),
+):
     user_id = "12345678-1234-1234-1234-123456789012"  # demo-user UUID
     cap = _rate_check_and_captcha(user_id)
     if cap:
         return cap
-    return course_service.list_courses()
+    return course_service.list_courses(
+        keyword=keyword,
+        year=year,
+        semester=semester,
+        level=level,
+        category=category,
+        department=department,
+        page=page,
+        page_size=pageSize,
+        sort=sort,
+        order=order,
+    )
 
 
 @router.get("/cart", summary="장바구니 조회")
@@ -106,4 +129,11 @@ async def unlock_after_captcha(body: CaptchaVerifyRequest):
     grant_captcha_unlock(user_id, ttl_seconds=30)
     return {"success": True, "message": "CAPTCHA 인증 성공, 1회 신청 가능"}
 
+
+@router.get("/departments", summary="개설전공/학과 목록")
+async def list_departments(
+    year: Optional[int] = Query(None, description="학년도"),
+    semester: Optional[int] = Query(None, ge=1, le=2, description="학기: 1|2"),
+):
+    return course_service.list_departments(year=year, semester=semester)
 

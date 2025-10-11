@@ -171,6 +171,38 @@ def bootstrap_sequence():
             print(f" {step_name} 실패로 부팅 중단")
             sys.exit(1)
 
+    # (옵션) 과목 데이터 업서트: curated JSON → courses 테이블
+    # 환경변수 UPSERT_COURSES_ON_BOOT (기본 1)로 제어, 데이터가 충분하면 스킵
+    try:
+        do_upsert = os.getenv("UPSERT_COURSES_ON_BOOT", "1").lower() in ("1", "true", "yes", "on")
+        curated_path = os.getenv("CURATED_COURSES_JSON")
+        if do_upsert:
+            print("\n 과목 업서트 확인 중...")
+            from pathlib import Path as _P
+            from db.session import get_db_session as _get
+            from sqlalchemy import text as _t
+            # 기본 경로: backend/static/demo/courses_curated.json
+            if not curated_path:
+                repo_root = _P(__file__).resolve().parent.parent
+                curated_path = str(repo_root / "static" / "demo" / "courses_curated.json")
+            # 현황 파악
+            with _get() as s:
+                total = s.execute(_t("SELECT COUNT(*) FROM courses")).scalar() or 0
+                with_dept = s.execute(_t("SELECT COUNT(*) FROM courses WHERE department IS NOT NULL")) .scalar() or 0
+            # 기준: 총 100 미만이거나 department 데이터 부족 시 업서트
+            if total < 100 or with_dept < total:
+                print(f" 과목 업서트 실행 (total={total}, with_dept={with_dept}) → {curated_path}")
+                try:
+                    from load_courses_to_db import upsert_courses as _upsert
+                    n = _upsert(_P(curated_path))
+                    print(f" 과목 업서트 완료: {n}개")
+                except Exception as e:
+                    print(f" 과목 업서트 실패(무시됨): {e}")
+            else:
+                print(" 과목 업서트 스킵: 데이터 충분")
+    except Exception as e:
+        print(f" 과목 업서트 준비 실패(무시됨): {e}")
+
     # 대량 적재는 비동기 전환 옵션
     async_loads = os.getenv("BOOTSTRAP_ASYNC_LOADS", "1").lower() in ("1", "true", "yes", "on")
     if async_loads:

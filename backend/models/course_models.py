@@ -17,6 +17,14 @@ class Course(BaseModel):
     schedule: str
     capacity: int
     enrolled: int
+    theory_hours: Optional[int] = Field(None, alias="theoryHours")
+    practice_hours: Optional[int] = Field(None, alias="practiceHours")
+    # 추가 메타 정보 (필터/표시에 사용)
+    department: Optional[str] = None
+    year: Optional[int] = None
+    semester: Optional[int] = None
+    level: Optional[str] = None
+    category: Optional[str] = None
 
     try:
         model_config = ConfigDict(populate_by_name=True, ser_json_by_alias=True)  # type: ignore

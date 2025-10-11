@@ -10,3 +10,23 @@
 | **장바구니에서 과목 제거** | `DELETE` | `/api/cart/{courseId}` | 장바구니에서 특정 과목을 제거합니다. |
 | **수강신청 (본 신청)** | `POST` | `/api/enroll` | 장바구니에서 선택한 과목들을 최종적으로 신청합니다. 정원 초과, 시간표 중복, CAPTCHA 대응 로직이 포함됩니다. |
 | **수강신청 결과 조회** | `GET` | `/api/my-courses` | 신청에 성공한 과목 목록을 확인합니다. 시간표 또는 마이페이지에서 사용됩니다. |
+
+## 데모 과목 100개 시드 적용 방법
+
+다음 명령으로 100개 과목 JSON을 생성하여 `backend/static/demo/courses.json`을 갱신합니다.
+
+```bash
+uv run backend/scripts/generate_courses.py 100 backend/static/demo/courses.json
+```
+
+이후 DB에 해당 과목들을 UPSERT 합니다.
+
+```bash
+uv run backend/scripts/load_courses_to_db.py backend/static/demo/courses.json
+```
+
+환경 변수 `DATABASE_URL`이 설정되어 있어야 합니다. 예시:
+
+```bash
+export DATABASE_URL=postgresql+psycopg2://user:pass@localhost:5432/aurora
+```

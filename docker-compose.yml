@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: aurora_postgres
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
@@ -34,7 +34,7 @@ services:
     networks: [ app-net ]
 
   migrator:
-    image: postgres:15
+    image: postgres:15-alpine
     env_file:
       - ./.env
     depends_on:
