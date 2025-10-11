@@ -44,7 +44,7 @@ class CourseRepository:
     ) -> List[Dict[str, Any]]:
         """Get courses with optional keyword filter and pagination/sorting"""
         with get_db_session() as session:
-            query = session.query(Course)
+            query = session.query(Course).filter(Course.is_active.is_(True))
 
             if keyword:
                 # case-insensitive search on title
@@ -106,7 +106,7 @@ class CourseRepository:
             
             courses = session.query(Course).join(CartItem).filter(
                 CartItem.cart_id == cart.id
-            ).all()
+            ).filter(Course.is_active.is_(True)).all()
             return [
                 {
                     "id": course.id,
@@ -243,7 +243,7 @@ class CourseRepository:
         with get_db_session() as session:
             courses = session.query(Course).join(Enrollment).filter(
                 Enrollment.user_id == user_id
-            ).all()
+            ).filter(Course.is_active.is_(True)).all()
             return [
                 {
                     "id": course.id,
