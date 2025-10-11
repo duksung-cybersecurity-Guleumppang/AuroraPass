@@ -1,7 +1,7 @@
 [
   {
     "courseId": "CS5501",
-    "title": "고급 운영체제 설계와 구현",
+    "title": "운영체제",
     "professor": "김교수",
     "schedule": "수 09:00-11:00",
     "capacity": 100,
@@ -14,7 +14,7 @@
   },
   {
     "courseId": "CS5502",
-    "title": "이론과실습 모바일개발",
+    "title": "소프트웨어 설계",
     "professor": "이교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -27,7 +27,7 @@
   },
   {
     "courseId": "CS5503",
-    "title": "모바일보안 캡스톤",
+    "title": "취약점 분석",
     "professor": "최교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -40,7 +40,7 @@
   },
   {
     "courseId": "CS5504",
-    "title": "딥러닝 기반 데이터마이닝: 실무",
+    "title": "통계학 개론 심화",
     "professor": "김교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -53,7 +53,7 @@
   },
   {
     "courseId": "CS5505",
-    "title": "실전 신호처리 설계",
+    "title": "AI 융합 개론 심화",
     "professor": "조교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -66,7 +66,7 @@
   },
   {
     "courseId": "CS5506",
-    "title": "워크숍 선형대수",
+    "title": "현대사회와 윤리 심화",
     "professor": "김교수",
     "schedule": "화 14:00-16:00",
     "capacity": 50,
@@ -79,7 +79,7 @@
   },
   {
     "courseId": "CS5507",
-    "title": "재무관리 프로젝트",
+    "title": "조직행동론 심화",
     "professor": "박교수",
     "schedule": "수 09:00-11:00",
     "capacity": 100,
@@ -92,7 +92,7 @@
   },
   {
     "courseId": "CS5508",
-    "title": "계량경제 심화: 응용",
+    "title": "경제정책론",
     "professor": "조교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -105,7 +105,7 @@
   },
   {
     "courseId": "CS5509",
-    "title": "알고리즘 심화 프로젝트",
+    "title": "인공지능 개론",
     "professor": "박교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -118,7 +118,7 @@
   },
   {
     "courseId": "CS5510",
-    "title": "케이스스터디 소프트웨어공학",
+    "title": "모바일 앱 개발",
     "professor": "윤교수",
     "schedule": "월 12:00-14:00",
     "capacity": 70,
@@ -131,7 +131,7 @@
   },
   {
     "courseId": "CS5511",
-    "title": "침해사고대응 세미나",
+    "title": "시스템 보안",
     "professor": "윤교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -144,7 +144,7 @@
   },
   {
     "courseId": "CS5512",
-    "title": "딥러닝 기반 머신러닝",
+    "title": "MLOps 실무 심화",
     "professor": "김교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -157,7 +157,7 @@
   },
   {
     "courseId": "CS5513",
-    "title": "특강 회로이론",
+    "title": "미래산업의 이해 심화",
     "professor": "강교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -170,7 +170,7 @@
   },
   {
     "courseId": "CS5514",
-    "title": "특강 수치해석",
+    "title": "창업과 혁신 심화",
     "professor": "김교수",
     "schedule": "월 10:00-12:00",
     "capacity": 90,
@@ -183,7 +183,7 @@
   },
   {
     "courseId": "CS5515",
-    "title": "운영관리 심화",
+    "title": "스타트업 경영 심화",
     "professor": "박교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -196,7 +196,7 @@
   },
   {
     "courseId": "CS5516",
-    "title": "미시경제 동학과 정책 분석: 입문",
+    "title": "경제 데이터 분석",
     "professor": "김교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -209,7 +209,7 @@
   },
   {
     "courseId": "CS5517",
-    "title": "현대 네트워크 이론과 응용",
+    "title": "임베디드 시스템",
     "professor": "윤교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -222,7 +222,7 @@
   },
   {
     "courseId": "CS5518",
-    "title": "캡스톤 클라우드",
+    "title": "데브옵스 개론",
     "professor": "강교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -235,7 +235,7 @@
   },
   {
     "courseId": "CS5519",
-    "title": "EDR 실무",
+    "title": "보안 거버넌스",
     "professor": "강교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -248,7 +248,7 @@
   },
   {
     "courseId": "CS5520",
-    "title": "프로젝트 딥러닝",
+    "title": "MLOps 실무",
     "professor": "최교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -261,7 +261,7 @@
   },
   {
     "courseId": "CS5521",
-    "title": "통신공학 응용",
+    "title": "기술과 인간",
     "professor": "강교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -274,7 +274,7 @@
   },
   {
     "courseId": "CS5522",
-    "title": "프로젝트 해석학",
+    "title": "AI 융합 개론",
     "professor": "조교수",
     "schedule": "월 12:00-14:00",
     "capacity": 70,
@@ -287,7 +287,7 @@
   },
   {
     "courseId": "CS5523",
-    "title": "회계학 응용",
+    "title": "회계원리 심화",
     "professor": "윤교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -300,7 +300,7 @@
   },
   {
     "courseId": "CS5524",
-    "title": "국제경제 모델링: 방법론",
+    "title": "금융경제학",
     "professor": "윤교수",
     "schedule": "금 14:00-16:00",
     "capacity": 50,
@@ -313,7 +313,7 @@
   },
   {
     "courseId": "CS5525",
-    "title": "세미나 자료구조",
+    "title": "인공지능",
     "professor": "강교수",
     "schedule": "금 09:00-11:00",
     "capacity": 100,
@@ -326,7 +326,7 @@
   },
   {
     "courseId": "CS5526",
-    "title": "세미나 웹개발",
+    "title": "프로그래밍 언어",
     "professor": "윤교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -339,7 +339,7 @@
   },
   {
     "courseId": "CS5527",
-    "title": "애플리케이션보안 기초",
+    "title": "보안 감사 실무 개론",
     "professor": "김교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -352,7 +352,7 @@
   },
   {
     "courseId": "CS5528",
-    "title": "통계학 입문",
+    "title": "데이터 시각화",
     "professor": "이교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -365,7 +365,7 @@
   },
   {
     "courseId": "CS5529",
-    "title": "실전 마이크로프로세서 설계: 이론과실습",
+    "title": "창의적 문제해결 개론",
     "professor": "최교수",
     "schedule": "화 13:00-15:00",
     "capacity": 60,
@@ -378,7 +378,7 @@
   },
   {
     "courseId": "CS5530",
-    "title": "심화 이산수학",
+    "title": "현대사회와 윤리",
     "professor": "조교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -391,7 +391,7 @@
   },
   {
     "courseId": "CS5531",
-    "title": "마케팅 입문",
+    "title": "회계원리",
     "professor": "윤교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -404,7 +404,7 @@
   },
   {
     "courseId": "CS5532",
-    "title": "거시경제 심화: 이론과실습",
+    "title": "거시경제학",
     "professor": "강교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -417,7 +417,7 @@
   },
   {
     "courseId": "CS5533",
-    "title": "실무 컴퓨터구조",
+    "title": "소프트웨어공학",
     "professor": "조교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -430,7 +430,7 @@
   },
   {
     "courseId": "CS5534",
-    "title": "실무 분산시스템",
+    "title": "백엔드 시스템 설계",
     "professor": "정교수",
     "schedule": "금 12:00-14:00",
     "capacity": 70,
@@ -443,7 +443,7 @@
   },
   {
     "courseId": "CS5535",
-    "title": "취약점진단 전략",
+    "title": "보안 프로그래밍",
     "professor": "이교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -456,7 +456,7 @@
   },
   {
     "courseId": "CS5538",
-    "title": "응용 확률론",
+    "title": "창업과 혁신",
     "professor": "김교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -469,7 +469,7 @@
   },
   {
     "courseId": "CS5539",
-    "title": "조직행동 방법론",
+    "title": "경영정보시스템",
     "professor": "강교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -482,7 +482,7 @@
   },
   {
     "courseId": "CS5540",
-    "title": "산업조직 동학과 정책 분석: 케이스스터디",
+    "title": "행동경제학",
     "professor": "강교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -495,7 +495,7 @@
   },
   {
     "courseId": "CS5541",
-    "title": "기초 데이터베이스",
+    "title": "컴퓨터 비전",
     "professor": "박교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -508,7 +508,7 @@
   },
   {
     "courseId": "CS5543",
-    "title": "IAM 사례분석",
+    "title": "네트워크 보안",
     "professor": "강교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -521,7 +521,7 @@
   },
   {
     "courseId": "CS5544",
-    "title": "데이터사이언스학과 캡스톤디자인",
+    "title": "추천 시스템 심화",
     "professor": "김교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -534,7 +534,7 @@
   },
   {
     "courseId": "CS5545",
-    "title": "전자공학과 캡스톤디자인",
+    "title": "미래산업의 이해",
     "professor": "강교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -547,7 +547,7 @@
   },
   {
     "courseId": "CS5550",
-    "title": "소프트웨어학과 캡스톤디자인",
+    "title": "프론트엔드 프로그래밍",
     "professor": "이교수",
     "schedule": "금 10:00-12:00",
     "capacity": 90,
@@ -560,7 +560,7 @@
   },
   {
     "courseId": "CS5551",
-    "title": "컴플라이언스 워크숍",
+    "title": "악성코드 분석",
     "professor": "조교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -573,7 +573,7 @@
   },
   {
     "courseId": "CS5552",
-    "title": "데이터사이언스학과 현장실무",
+    "title": "딥러닝 심화",
     "professor": "이교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -586,7 +586,7 @@
   },
   {
     "courseId": "CS5553",
-    "title": "전자공학과 현장실무",
+    "title": "융합캡스톤디자인",
     "professor": "김교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -599,7 +599,7 @@
   },
   {
     "courseId": "CS5554",
-    "title": "수학과 캡스톤디자인",
+    "title": "창의적 문제해결",
     "professor": "윤교수",
     "schedule": "월 14:00-16:00",
     "capacity": 50,
@@ -612,7 +612,7 @@
   },
   {
     "courseId": "CS5555",
-    "title": "경영학과 캡스톤디자인",
+    "title": "인적자원관리",
     "professor": "윤교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -625,7 +625,7 @@
   },
   {
     "courseId": "CS5556",
-    "title": "경제학과 캡스톤디자인",
+    "title": "산업조직론",
     "professor": "조교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -638,7 +638,7 @@
   },
   {
     "courseId": "CS5557",
-    "title": "컴퓨터공학과 캡스톤디자인",
+    "title": "컴퓨터 네트워크",
     "professor": "강교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -651,7 +651,7 @@
   },
   {
     "courseId": "CS5558",
-    "title": "소프트웨어학과 현장실무",
+    "title": "클라우드 네이티브 개발",
     "professor": "조교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -664,7 +664,7 @@
   },
   {
     "courseId": "CS5559",
-    "title": "네트워크보안 특강",
+    "title": "보안 정책과 법규",
     "professor": "조교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -677,7 +677,7 @@
   },
   {
     "courseId": "CS5560",
-    "title": "데이터사이언스학과 최신기술특강",
+    "title": "데이터 마이닝 심화",
     "professor": "박교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -690,7 +690,7 @@
   },
   {
     "courseId": "CS5561",
-    "title": "전자공학과 최신기술특강",
+    "title": "비판적 사고와 글쓰기 심화",
     "professor": "이교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -703,7 +703,7 @@
   },
   {
     "courseId": "CS5562",
-    "title": "수학과 현장실무",
+    "title": "비판적 사고와 글쓰기",
     "professor": "조교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -716,7 +716,7 @@
   },
   {
     "courseId": "CS5563",
-    "title": "경영학과 현장실무",
+    "title": "재무관리",
     "professor": "이교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -729,7 +729,7 @@
   },
   {
     "courseId": "CS5564",
-    "title": "경제학과 현장실무",
+    "title": "계량경제학",
     "professor": "윤교수",
     "schedule": "금 12:00-14:00",
     "capacity": 70,
@@ -742,7 +742,7 @@
   },
   {
     "courseId": "CS5565",
-    "title": "컴퓨터공학과 현장실무",
+    "title": "운영체제 개론",
     "professor": "최교수",
     "schedule": "화 13:00-15:00",
     "capacity": 60,
@@ -755,7 +755,7 @@
   },
   {
     "courseId": "CS5566",
-    "title": "소프트웨어학과 최신기술특강",
+    "title": "웹 애플리케이션 개발",
     "professor": "최교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -768,7 +768,7 @@
   },
   {
     "courseId": "CS5567",
-    "title": "DevSecOps 프로젝트",
+    "title": "디지털 포렌식",
     "professor": "조교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -781,7 +781,7 @@
   },
   {
     "courseId": "CS5568",
-    "title": "데이터사이언스학과 연구콜로키움",
+    "title": "딥러닝",
     "professor": "조교수",
     "schedule": "금 10:00-12:00",
     "capacity": 90,
@@ -794,7 +794,7 @@
   },
   {
     "courseId": "CS5569",
-    "title": "전자공학과 연구콜로키움",
+    "title": "미래산업의 이해 심화",
     "professor": "이교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -807,7 +807,7 @@
   },
   {
     "courseId": "CS5570",
-    "title": "수학과 최신기술특강",
+    "title": "AI 융합 개론 심화",
     "professor": "윤교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -820,7 +820,7 @@
   },
   {
     "courseId": "CS5571",
-    "title": "경영학과 최신기술특강",
+    "title": "경영전략 심화",
     "professor": "김교수",
     "schedule": "화 13:00-15:00",
     "capacity": 60,
@@ -833,7 +833,7 @@
   },
   {
     "courseId": "CS5572",
-    "title": "경제학과 최신기술특강",
+    "title": "경제 데이터 분석 개론",
     "professor": "강교수",
     "schedule": "월 14:00-16:00",
     "capacity": 50,
@@ -846,7 +846,7 @@
   },
   {
     "courseId": "CS5573",
-    "title": "컴퓨터공학과 최신기술특강",
+    "title": "알고리즘",
     "professor": "조교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -859,7 +859,7 @@
   },
   {
     "courseId": "CS5574",
-    "title": "소프트웨어학과 연구콜로키움",
+    "title": "테스트와 품질보증",
     "professor": "강교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -872,7 +872,7 @@
   },
   {
     "courseId": "CS5575",
-    "title": "블록체인보안 심화",
+    "title": "침해사고 대응",
     "professor": "윤교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -885,7 +885,7 @@
   },
   {
     "courseId": "CS5576",
-    "title": "데이터사이언스학과 프로젝트 스튜디오",
+    "title": "추천 시스템",
     "professor": "박교수",
     "schedule": "금 12:00-14:00",
     "capacity": 70,
@@ -898,7 +898,7 @@
   },
   {
     "courseId": "CS5577",
-    "title": "전자공학과 프로젝트 스튜디오",
+    "title": "비판적 사고와 글쓰기 심화",
     "professor": "조교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -911,7 +911,7 @@
   },
   {
     "courseId": "CS5578",
-    "title": "수학과 연구콜로키움",
+    "title": "비판적 사고와 글쓰기 심화",
     "professor": "박교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -924,7 +924,7 @@
   },
   {
     "courseId": "CS5579",
-    "title": "경영학과 연구콜로키움",
+    "title": "조직행동론",
     "professor": "이교수",
     "schedule": "금 09:00-11:00",
     "capacity": 100,
@@ -937,7 +937,7 @@
   },
   {
     "courseId": "CS5580",
-    "title": "경제학과 연구콜로키움",
+    "title": "미시경제학",
     "professor": "조교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -950,7 +950,7 @@
   },
   {
     "courseId": "CS5581",
-    "title": "컴퓨터공학과 연구콜로키움",
+    "title": "웹 프로그래밍 개론",
     "professor": "조교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -963,7 +963,7 @@
   },
   {
     "courseId": "CS5582",
-    "title": "소프트웨어학과 프로젝트 스튜디오",
+    "title": "API 설계와 보안",
     "professor": "최교수",
     "schedule": "금 12:00-14:00",
     "capacity": 70,
@@ -976,7 +976,7 @@
   },
   {
     "courseId": "CS5583",
-    "title": "암호학",
+    "title": "클라우드 보안",
     "professor": "정교수",
     "schedule": "화 13:00-15:00",
     "capacity": 60,
@@ -989,7 +989,7 @@
   },
   {
     "courseId": "CS5584",
-    "title": "데이터사이언스학과 산업협력포럼",
+    "title": "자연어처리",
     "professor": "조교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -1002,7 +1002,7 @@
   },
   {
     "courseId": "CS5585",
-    "title": "전자공학과 산업협력포럼",
+    "title": "기술과 인간 심화",
     "professor": "윤교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -1015,7 +1015,7 @@
   },
   {
     "courseId": "CS5586",
-    "title": "수학과 프로젝트 스튜디오",
+    "title": "미래산업의 이해 심화",
     "professor": "이교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -1028,7 +1028,7 @@
   },
   {
     "courseId": "CS5587",
-    "title": "경영학과 프로젝트 스튜디오",
+    "title": "스타트업 경영",
     "professor": "정교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -1041,7 +1041,7 @@
   },
   {
     "courseId": "CS5588",
-    "title": "경제학과 프로젝트 스튜디오",
+    "title": "노동경제학",
     "professor": "정교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -1054,7 +1054,7 @@
   },
   {
     "courseId": "CS5589",
-    "title": "컴퓨터공학과 프로젝트 스튜디오",
+    "title": "딥러닝 개론",
     "professor": "정교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -1067,7 +1067,7 @@
   },
   {
     "courseId": "CS5590",
-    "title": "소프트웨어학과 산업협력포럼",
+    "title": "프로그래밍 언어",
     "professor": "조교수",
     "schedule": "월 14:00-16:00",
     "capacity": 50,
@@ -1080,7 +1080,7 @@
   },
   {
     "courseId": "CS5591",
-    "title": "리버스엔지니어링 입문",
+    "title": "암호학 개론",
     "professor": "조교수",
     "schedule": "금 09:00-11:00",
     "capacity": 100,
@@ -1093,7 +1093,7 @@
   },
   {
     "courseId": "CS5594",
-    "title": "수학과 산업협력포럼",
+    "title": "기술과 인간 심화",
     "professor": "강교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -1106,7 +1106,7 @@
   },
   {
     "courseId": "CS5595",
-    "title": "경영학과 산업협력포럼",
+    "title": "재무관리 심화",
     "professor": "김교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -1119,7 +1119,7 @@
   },
   {
     "courseId": "CS5596",
-    "title": "경제학과 산업협력포럼",
+    "title": "국제무역론",
     "professor": "강교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -1132,7 +1132,7 @@
   },
   {
     "courseId": "CS5597",
-    "title": "컴퓨터공학과 산업협력포럼",
+    "title": "데이터베이스",
     "professor": "윤교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -1145,7 +1145,7 @@
   },
   {
     "courseId": "CS5599",
-    "title": "OT/ICS보안 방법론",
+    "title": "IoT 보안",
     "professor": "김교수",
     "schedule": "금 11:00-13:00",
     "capacity": 80,
@@ -1158,7 +1158,7 @@
   },
   {
     "courseId": "CS5607",
-    "title": "클라우드보안 심층 분석: 캡스톤",
+    "title": "보안 감사 실무",
     "professor": "박교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -1171,7 +1171,7 @@
   },
   {
     "courseId": "CS5608",
-    "title": "데이터사이언스학과 주제탐구",
+    "title": "시계열 분석 개론",
     "professor": "김교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -1184,7 +1184,7 @@
   },
   {
     "courseId": "CS5609",
-    "title": "전자공학과 주제탐구",
+    "title": "현대사회와 윤리 개론",
     "professor": "윤교수",
     "schedule": "금 09:00-11:00",
     "capacity": 100,
@@ -1197,7 +1197,7 @@
   },
   {
     "courseId": "CS5614",
-    "title": "소프트웨어학과 주제탐구",
+    "title": "웹 애플리케이션 개발",
     "professor": "조교수",
     "schedule": "월 14:00-16:00",
     "capacity": 50,
@@ -1210,7 +1210,7 @@
   },
   {
     "courseId": "CS5615",
-    "title": "위협인텔리전스 위협 모델링과 대응: 세미나",
+    "title": "웹 보안",
     "professor": "윤교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -1223,7 +1223,7 @@
   },
   {
     "courseId": "CS5616",
-    "title": "데이터사이언스학과 방법론 특강",
+    "title": "데이터 사이언스",
     "professor": "윤교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -1236,7 +1236,7 @@
   },
   {
     "courseId": "CS5617",
-    "title": "전자공학과 방법론 특강",
+    "title": "미래산업의 이해",
     "professor": "이교수",
     "schedule": "목 11:00-13:00",
     "capacity": 80,
@@ -1249,7 +1249,7 @@
   },
   {
     "courseId": "CS5618",
-    "title": "수학과 주제탐구",
+    "title": "미래산업의 이해 개론",
     "professor": "조교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -1262,7 +1262,7 @@
   },
   {
     "courseId": "CS5619",
-    "title": "경영학과 주제탐구",
+    "title": "서비스경영 개론",
     "professor": "강교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -1275,7 +1275,7 @@
   },
   {
     "courseId": "CS5620",
-    "title": "경제학과 주제탐구",
+    "title": "경제 데이터 분석",
     "professor": "강교수",
     "schedule": "금 14:00-16:00",
     "capacity": 50,
@@ -1288,7 +1288,7 @@
   },
   {
     "courseId": "CS5621",
-    "title": "컴퓨터공학과 주제탐구",
+    "title": "웹 프로그래밍",
     "professor": "조교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -1301,7 +1301,7 @@
   },
   {
     "courseId": "CS5622",
-    "title": "소프트웨어학과 방법론 특강",
+    "title": "프로그래밍 언어",
     "professor": "강교수",
     "schedule": "금 10:00-12:00",
     "capacity": 90,
@@ -1314,7 +1314,7 @@
   },
   {
     "courseId": "CS5623",
-    "title": "현대 IoT보안과 보안 프로토콜: 실무",
+    "title": "모의해킹",
     "professor": "최교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -1327,7 +1327,7 @@
   },
   {
     "courseId": "CS5624",
-    "title": "데이터사이언스학과 사례연구",
+    "title": "데이터 마이닝",
     "professor": "김교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -1340,7 +1340,7 @@
   },
   {
     "courseId": "CS5625",
-    "title": "전자공학과 사례연구",
+    "title": "AI 융합 개론 심화",
     "professor": "이교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -1353,7 +1353,7 @@
   },
   {
     "courseId": "CS5626",
-    "title": "수학과 방법론 특강",
+    "title": "융합캡스톤디자인",
     "professor": "윤교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -1366,7 +1366,7 @@
   },
   {
     "courseId": "CS5627",
-    "title": "경영학과 방법론 특강",
+    "title": "경영전략",
     "professor": "박교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -1379,7 +1379,7 @@
   },
   {
     "courseId": "CS5628",
-    "title": "경제학과 방법론 특강",
+    "title": "경제정책론",
     "professor": "김교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -1392,7 +1392,7 @@
   },
   {
     "courseId": "CS5629",
-    "title": "컴퓨터공학과 방법론 특강",
+    "title": "모바일 프로그래밍",
     "professor": "박교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -1405,7 +1405,7 @@
   },
   {
     "courseId": "CS5630",
-    "title": "소프트웨어학과 사례연구",
+    "title": "API 설계와 보안",
     "professor": "조교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -1418,7 +1418,7 @@
   },
   {
     "courseId": "CS5631",
-    "title": "웹보안 심층 분석: 기초",
+    "title": "악성코드 분석",
     "professor": "김교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -1431,7 +1431,7 @@
   },
   {
     "courseId": "CS5634",
-    "title": "수학과 사례연구",
+    "title": "미래산업의 이해 심화",
     "professor": "윤교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -1444,7 +1444,7 @@
   },
   {
     "courseId": "CS5635",
-    "title": "경영학과 사례연구",
+    "title": "마케팅 원론",
     "professor": "이교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -1457,7 +1457,7 @@
   },
   {
     "courseId": "CS5636",
-    "title": "경제학과 사례연구",
+    "title": "금융경제학",
     "professor": "최교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -1470,7 +1470,7 @@
   },
   {
     "courseId": "CS5637",
-    "title": "컴퓨터공학과 사례연구",
+    "title": "시스템 프로그래밍",
     "professor": "윤교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -1483,7 +1483,7 @@
   },
   {
     "courseId": "CS5639",
-    "title": "모의해킹 위협 모델링과 대응: 전략",
+    "title": "클라우드 보안",
     "professor": "김교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -1496,7 +1496,7 @@
   },
   {
     "courseId": "CS5640",
-    "title": "데이터사이언스학과 스페셜토픽",
+    "title": "시계열 분석",
     "professor": "박교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -1509,7 +1509,7 @@
   },
   {
     "courseId": "CS5641",
-    "title": "전자공학과 스페셜토픽",
+    "title": "비판적 사고와 글쓰기 심화",
     "professor": "김교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -1522,7 +1522,7 @@
   },
   {
     "courseId": "CS5646",
-    "title": "소프트웨어학과 스페셜토픽",
+    "title": "클라우드 네이티브 개발",
     "professor": "이교수",
     "schedule": "월 10:00-12:00",
     "capacity": 90,
@@ -1535,7 +1535,7 @@
   },
   {
     "courseId": "CS5647",
-    "title": "현대 SIEM과 보안 프로토콜: 사례분석",
+    "title": "암호학 개론",
     "professor": "강교수",
     "schedule": "금 11:00-13:00",
     "capacity": 80,
@@ -1548,7 +1548,7 @@
   },
   {
     "courseId": "CS5648",
-    "title": "데이터사이언스학과 테크토크",
+    "title": "통계학 개론",
     "professor": "최교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -1561,7 +1561,7 @@
   },
   {
     "courseId": "CS5649",
-    "title": "전자공학과 테크토크",
+    "title": "미래산업의 이해 심화",
     "professor": "이교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -1574,7 +1574,7 @@
   },
   {
     "courseId": "CS5650",
-    "title": "수학과 스페셜토픽",
+    "title": "기술과 인간 심화",
     "professor": "윤교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -1587,7 +1587,7 @@
   },
   {
     "courseId": "CS5651",
-    "title": "경영학과 스페셜토픽",
+    "title": "서비스경영 심화",
     "professor": "이교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -1600,7 +1600,7 @@
   },
   {
     "courseId": "CS5652",
-    "title": "경제학과 스페셜토픽",
+    "title": "금융경제학",
     "professor": "윤교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -1613,7 +1613,7 @@
   },
   {
     "courseId": "CS5653",
-    "title": "컴퓨터공학과 스페셜토픽",
+    "title": "컴퓨터구조",
     "professor": "조교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -1626,7 +1626,7 @@
   },
   {
     "courseId": "CS5654",
-    "title": "소프트웨어학과 테크토크",
+    "title": "데브옵스 개론",
     "professor": "강교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -1639,7 +1639,7 @@
   },
   {
     "courseId": "CS5655",
-    "title": "위험관리 심층 분석: 워크숍",
+    "title": "네트워크 보안",
     "professor": "정교수",
     "schedule": "화 13:00-15:00",
     "capacity": 60,
@@ -1652,7 +1652,7 @@
   },
   {
     "courseId": "CS5656",
-    "title": "데이터사이언스학과 실무클리닉",
+    "title": "시계열 분석 심화",
     "professor": "정교수",
     "schedule": "월 14:00-16:00",
     "capacity": 50,
@@ -1665,7 +1665,7 @@
   },
   {
     "courseId": "CS5657",
-    "title": "전자공학과 실무클리닉",
+    "title": "창의적 문제해결 심화",
     "professor": "정교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -1678,7 +1678,7 @@
   },
   {
     "courseId": "CS5658",
-    "title": "수학과 테크토크",
+    "title": "현대사회와 윤리 심화",
     "professor": "이교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -1691,7 +1691,7 @@
   },
   {
     "courseId": "CS5659",
-    "title": "경영학과 테크토크",
+    "title": "인적자원관리 심화",
     "professor": "김교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -1704,7 +1704,7 @@
   },
   {
     "courseId": "CS5660",
-    "title": "경제학과 테크토크",
+    "title": "행동경제학",
     "professor": "윤교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -1717,7 +1717,7 @@
   },
   {
     "courseId": "CS5661",
-    "title": "컴퓨터공학과 테크토크",
+    "title": "자료구조",
     "professor": "김교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -1730,7 +1730,7 @@
   },
   {
     "courseId": "CS5662",
-    "title": "소프트웨어학과 실무클리닉",
+    "title": "클라우드 네이티브 개발",
     "professor": "정교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -1743,7 +1743,7 @@
   },
   {
     "courseId": "CS5663",
-    "title": "디지털포렌식 위협 모델링과 대응: 특강",
+    "title": "보안 거버넌스",
     "professor": "최교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -1756,7 +1756,7 @@
   },
   {
     "courseId": "CS5664",
-    "title": "데이터사이언스학과 스터디랩",
+    "title": "데이터 사이언스 개론",
     "professor": "최교수",
     "schedule": "월 10:00-12:00",
     "capacity": 90,
@@ -1769,7 +1769,7 @@
   },
   {
     "courseId": "CS5665",
-    "title": "전자공학과 스터디랩",
+    "title": "현대사회와 윤리 심화",
     "professor": "최교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -1782,7 +1782,7 @@
   },
   {
     "courseId": "CS5666",
-    "title": "수학과 실무클리닉",
+    "title": "AI 융합 개론 심화",
     "professor": "정교수",
     "schedule": "금 12:00-14:00",
     "capacity": 70,
@@ -1795,7 +1795,7 @@
   },
   {
     "courseId": "CS5667",
-    "title": "경영학과 실무클리닉",
+    "title": "국제경영",
     "professor": "김교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -1808,7 +1808,7 @@
   },
   {
     "courseId": "CS5668",
-    "title": "경제학과 실무클리닉",
+    "title": "노동경제학",
     "professor": "박교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -1821,7 +1821,7 @@
   },
   {
     "courseId": "CS5669",
-    "title": "컴퓨터공학과 실무클리닉",
+    "title": "컴퓨터구조",
     "professor": "정교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -1834,7 +1834,7 @@
   },
   {
     "courseId": "CS5670",
-    "title": "소프트웨어학과 스터디랩",
+    "title": "클라우드 네이티브 개발",
     "professor": "정교수",
     "schedule": "금 10:00-12:00",
     "capacity": 90,
@@ -1847,7 +1847,7 @@
   },
   {
     "courseId": "CS5671",
-    "title": "현대 제로트러스트과 보안 프로토콜: 프로젝트",
+    "title": "웹 보안",
     "professor": "윤교수",
     "schedule": "목 11:00-13:00",
     "capacity": 80,
@@ -1860,7 +1860,7 @@
   },
   {
     "courseId": "CS5674",
-    "title": "수학과 스터디랩",
+    "title": "AI 융합 개론 심화",
     "professor": "김교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -1873,7 +1873,7 @@
   },
   {
     "courseId": "CS5675",
-    "title": "경영학과 스터디랩",
+    "title": "국제경영 심화",
     "professor": "박교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -1886,7 +1886,7 @@
   },
   {
     "courseId": "CS5676",
-    "title": "경제학과 스터디랩",
+    "title": "산업조직론",
     "professor": "이교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -1899,7 +1899,7 @@
   },
   {
     "courseId": "CS5677",
-    "title": "컴퓨터공학과 스터디랩",
+    "title": "컴퓨터구조",
     "professor": "이교수",
     "schedule": "목 11:00-13:00",
     "capacity": 80,
@@ -1912,7 +1912,7 @@
   },
   {
     "courseId": "CS5679",
-    "title": "보안거버넌스 심층 분석: 심화",
+    "title": "보안 감사 실무",
     "professor": "김교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -1925,7 +1925,7 @@
   },
   {
     "courseId": "CS5680",
-    "title": "데이터사이언스학과 실전프로젝트",
+    "title": "MLOps 실무 개론",
     "professor": "조교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -1938,7 +1938,7 @@
   },
   {
     "courseId": "CS5681",
-    "title": "전자공학과 실전프로젝트",
+    "title": "기술과 인간 개론",
     "professor": "조교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -1951,7 +1951,7 @@
   },
   {
     "courseId": "CS5686",
-    "title": "소프트웨어학과 실전프로젝트",
+    "title": "모바일 앱 개발",
     "professor": "정교수",
     "schedule": "목 14:00-16:00",
     "capacity": 50,
@@ -1964,7 +1964,7 @@
   },
   {
     "courseId": "CS5687",
-    "title": "시스템보안 위협 모델링과 대응: 응용",
+    "title": "보안 프로그래밍",
     "professor": "박교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -1977,7 +1977,7 @@
   },
   {
     "courseId": "CS5688",
-    "title": "데이터사이언스학과 산학프로젝트",
+    "title": "머신러닝",
     "professor": "박교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -1990,7 +1990,7 @@
   },
   {
     "courseId": "CS5689",
-    "title": "전자공학과 산학프로젝트",
+    "title": "현대사회와 윤리 개론",
     "professor": "박교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -2003,7 +2003,7 @@
   },
   {
     "courseId": "CS5690",
-    "title": "수학과 실전프로젝트",
+    "title": "창업과 혁신 개론",
     "professor": "박교수",
     "schedule": "월 12:00-14:00",
     "capacity": 70,
@@ -2016,7 +2016,7 @@
   },
   {
     "courseId": "CS5691",
-    "title": "경영학과 실전프로젝트",
+    "title": "서비스경영",
     "professor": "조교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -2029,7 +2029,7 @@
   },
   {
     "courseId": "CS5692",
-    "title": "경제학과 실전프로젝트",
+    "title": "거시경제학",
     "professor": "이교수",
     "schedule": "화 14:00-16:00",
     "capacity": 50,
@@ -2042,7 +2042,7 @@
   },
   {
     "courseId": "CS5693",
-    "title": "컴퓨터공학과 실전프로젝트",
+    "title": "임베디드 시스템",
     "professor": "정교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -2055,7 +2055,7 @@
   },
   {
     "courseId": "CS5694",
-    "title": "소프트웨어학과 산학프로젝트",
+    "title": "모바일 앱 개발",
     "professor": "윤교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -2068,7 +2068,7 @@
   },
   {
     "courseId": "CS5695",
-    "title": "현대 악성코드분석과 보안 프로토콜: 입문",
+    "title": "악성코드 분석",
     "professor": "윤교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -2081,7 +2081,7 @@
   },
   {
     "courseId": "CS5696",
-    "title": "데이터사이언스학과 혁신워크숍",
+    "title": "시계열 분석 심화",
     "professor": "김교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -2094,7 +2094,7 @@
   },
   {
     "courseId": "CS5697",
-    "title": "전자공학과 혁신워크숍",
+    "title": "미래산업의 이해 심화",
     "professor": "이교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -2107,7 +2107,7 @@
   },
   {
     "courseId": "CS5698",
-    "title": "수학과 산학프로젝트",
+    "title": "융합캡스톤디자인",
     "professor": "이교수",
     "schedule": "화 14:00-16:00",
     "capacity": 50,
@@ -2120,7 +2120,7 @@
   },
   {
     "courseId": "CS5699",
-    "title": "경영학과 산학프로젝트",
+    "title": "국제경영 개론",
     "professor": "김교수",
     "schedule": "수 09:00-11:00",
     "capacity": 100,
@@ -2133,7 +2133,7 @@
   },
   {
     "courseId": "CS5700",
-    "title": "경제학과 산학프로젝트",
+    "title": "미시경제학",
     "professor": "강교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -2146,7 +2146,7 @@
   },
   {
     "courseId": "CS5701",
-    "title": "컴퓨터공학과 산학프로젝트",
+    "title": "시스템 프로그래밍",
     "professor": "정교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -2159,7 +2159,7 @@
   },
   {
     "courseId": "CS5702",
-    "title": "소프트웨어학과 혁신워크숍",
+    "title": "웹 애플리케이션 개발",
     "professor": "윤교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -2172,7 +2172,7 @@
   },
   {
     "courseId": "CS5703",
-    "title": "프라이버시공학 심층 분석: 방법론",
+    "title": "보안 감사 실무",
     "professor": "박교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -2185,7 +2185,7 @@
   },
   {
     "courseId": "CS5704",
-    "title": "데이터사이언스학과 이론과실습",
+    "title": "데이터 마이닝 심화",
     "professor": "김교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -2198,7 +2198,7 @@
   },
   {
     "courseId": "CS5705",
-    "title": "전자공학과 이론과실습",
+    "title": "창업과 혁신 심화",
     "professor": "조교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -2211,7 +2211,7 @@
   },
   {
     "courseId": "CS5706",
-    "title": "수학과 혁신워크숍",
+    "title": "창의적 문제해결 심화",
     "professor": "조교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -2224,7 +2224,7 @@
   },
   {
     "courseId": "CS5707",
-    "title": "경영학과 혁신워크숍",
+    "title": "마케팅 원론",
     "professor": "김교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -2237,7 +2237,7 @@
   },
   {
     "courseId": "CS5708",
-    "title": "경제학과 혁신워크숍",
+    "title": "행동경제학",
     "professor": "이교수",
     "schedule": "월 12:00-14:00",
     "capacity": 70,
@@ -2250,7 +2250,7 @@
   },
   {
     "courseId": "CS5709",
-    "title": "컴퓨터공학과 혁신워크숍",
+    "title": "컴퓨터구조 개론",
     "professor": "정교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -2263,7 +2263,7 @@
   },
   {
     "courseId": "CS5710",
-    "title": "소프트웨어학과 이론과실습",
+    "title": "소프트웨어 설계",
     "professor": "정교수",
     "schedule": "화 14:00-16:00",
     "capacity": 50,
@@ -2276,7 +2276,7 @@
   },
   {
     "courseId": "CS5714",
-    "title": "수학과 이론과실습",
+    "title": "기술과 인간 심화",
     "professor": "박교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -2289,7 +2289,7 @@
   },
   {
     "courseId": "CS5715",
-    "title": "경영학과 이론과실습",
+    "title": "경영정보시스템 심화",
     "professor": "김교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -2302,7 +2302,7 @@
   },
   {
     "courseId": "CS5716",
-    "title": "경제학과 이론과실습",
+    "title": "거시경제학",
     "professor": "최교수",
     "schedule": "수 14:00-16:00",
     "capacity": 50,
@@ -2315,7 +2315,7 @@
   },
   {
     "courseId": "CS5717",
-    "title": "컴퓨터공학과 이론과실습",
+    "title": "소프트웨어공학",
     "professor": "조교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -2328,7 +2328,7 @@
   },
   {
     "courseId": "CS5719",
-    "title": "사이버보안전공 캡스톤디자인",
+    "title": "클라우드 보안",
     "professor": "김교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -2341,7 +2341,7 @@
   },
   {
     "courseId": "CS5720",
-    "title": "데이터사이언스학과 연구방법",
+    "title": "데이터 사이언스 심화",
     "professor": "이교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -2354,7 +2354,7 @@
   },
   {
     "courseId": "CS5721",
-    "title": "전자공학과 연구방법",
+    "title": "융합캡스톤디자인 심화",
     "professor": "박교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
@@ -2367,7 +2367,7 @@
   },
   {
     "courseId": "CS5726",
-    "title": "소프트웨어학과 연구방법",
+    "title": "테스트와 품질보증",
     "professor": "정교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -2380,7 +2380,7 @@
   },
   {
     "courseId": "CS5727",
-    "title": "사이버보안전공 현장실무",
+    "title": "악성코드 분석 개론",
     "professor": "윤교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -2393,7 +2393,7 @@
   },
   {
     "courseId": "CS5730",
-    "title": "수학과 연구방법",
+    "title": "현대사회와 윤리 심화",
     "professor": "김교수",
     "schedule": "수 10:00-12:00",
     "capacity": 90,
@@ -2406,7 +2406,7 @@
   },
   {
     "courseId": "CS5731",
-    "title": "경영학과 연구방법",
+    "title": "재무관리 심화",
     "professor": "김교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -2419,7 +2419,7 @@
   },
   {
     "courseId": "CS5732",
-    "title": "경제학과 연구방법",
+    "title": "경제정책론",
     "professor": "정교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -2432,7 +2432,7 @@
   },
   {
     "courseId": "CS5733",
-    "title": "컴퓨터공학과 연구방법",
+    "title": "모바일 프로그래밍",
     "professor": "박교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -2445,7 +2445,7 @@
   },
   {
     "courseId": "CS5735",
-    "title": "사이버보안전공 최신기술특강",
+    "title": "침해사고 대응",
     "professor": "이교수",
     "schedule": "수 09:00-11:00",
     "capacity": 100,
@@ -2458,7 +2458,7 @@
   },
   {
     "courseId": "CS5736",
-    "title": "데이터사이언스학과 기술워크숍",
+    "title": "추천 시스템 개론",
     "professor": "이교수",
     "schedule": "월 10:00-12:00",
     "capacity": 90,
@@ -2471,7 +2471,7 @@
   },
   {
     "courseId": "CS5737",
-    "title": "전자공학과 기술워크숍",
+    "title": "AI 융합 개론 심화",
     "professor": "조교수",
     "schedule": "월 11:00-13:00",
     "capacity": 80,
@@ -2484,7 +2484,7 @@
   },
   {
     "courseId": "CS5742",
-    "title": "소프트웨어학과 기술워크숍",
+    "title": "클라우드 네이티브 개발",
     "professor": "이교수",
     "schedule": "금 10:00-12:00",
     "capacity": 90,
@@ -2497,7 +2497,7 @@
   },
   {
     "courseId": "CS5743",
-    "title": "사이버보안전공 연구콜로키움",
+    "title": "보안 정책과 법규",
     "professor": "이교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -2510,7 +2510,7 @@
   },
   {
     "courseId": "CS5744",
-    "title": "데이터사이언스학과 연구포럼",
+    "title": "추천 시스템",
     "professor": "최교수",
     "schedule": "수 12:00-14:00",
     "capacity": 70,
@@ -2523,7 +2523,7 @@
   },
   {
     "courseId": "CS5745",
-    "title": "전자공학과 연구포럼",
+    "title": "기술과 인간",
     "professor": "강교수",
     "schedule": "화 13:00-15:00",
     "capacity": 60,
@@ -2536,7 +2536,7 @@
   },
   {
     "courseId": "CS5746",
-    "title": "수학과 기술워크숍",
+    "title": "비판적 사고와 글쓰기 심화",
     "professor": "김교수",
     "schedule": "월 14:00-16:00",
     "capacity": 50,
@@ -2549,7 +2549,7 @@
   },
   {
     "courseId": "CS5747",
-    "title": "경영학과 기술워크숍",
+    "title": "스타트업 경영 심화",
     "professor": "이교수",
     "schedule": "금 09:00-11:00",
     "capacity": 100,
@@ -2562,7 +2562,7 @@
   },
   {
     "courseId": "CS5748",
-    "title": "경제학과 기술워크숍",
+    "title": "거시경제학",
     "professor": "이교수",
     "schedule": "목 10:00-12:00",
     "capacity": 90,
@@ -2575,7 +2575,7 @@
   },
   {
     "courseId": "CS5749",
-    "title": "컴퓨터공학과 기술워크숍",
+    "title": "모바일 프로그래밍",
     "professor": "윤교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -2588,7 +2588,7 @@
   },
   {
     "courseId": "CS5750",
-    "title": "소프트웨어학과 연구포럼",
+    "title": "모바일 앱 개발",
     "professor": "박교수",
     "schedule": "화 12:00-14:00",
     "capacity": 70,
@@ -2601,7 +2601,7 @@
   },
   {
     "courseId": "CS5751",
-    "title": "사이버보안전공 프로젝트 스튜디오",
+    "title": "모의해킹",
     "professor": "윤교수",
     "schedule": "월 13:00-15:00",
     "capacity": 60,
@@ -2614,7 +2614,7 @@
   },
   {
     "courseId": "CS5754",
-    "title": "수학과 연구포럼",
+    "title": "현대사회와 윤리 개론",
     "professor": "윤교수",
     "schedule": "화 10:00-12:00",
     "capacity": 90,
@@ -2627,7 +2627,7 @@
   },
   {
     "courseId": "CS5755",
-    "title": "경영학과 연구포럼",
+    "title": "재무관리 심화",
     "professor": "이교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -2640,7 +2640,7 @@
   },
   {
     "courseId": "CS5756",
-    "title": "경제학과 연구포럼",
+    "title": "계량경제학",
     "professor": "최교수",
     "schedule": "목 12:00-14:00",
     "capacity": 70,
@@ -2653,7 +2653,7 @@
   },
   {
     "courseId": "CS5757",
-    "title": "컴퓨터공학과 연구포럼",
+    "title": "컴퓨터 네트워크",
     "professor": "박교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -2666,7 +2666,7 @@
   },
   {
     "courseId": "CS5759",
-    "title": "사이버보안전공 산업협력포럼",
+    "title": "암호학 개론",
     "professor": "김교수",
     "schedule": "월 09:00-11:00",
     "capacity": 100,
@@ -2679,7 +2679,7 @@
   },
   {
     "courseId": "CS5783",
-    "title": "사이버보안전공 주제탐구",
+    "title": "웹 보안",
     "professor": "윤교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -2692,7 +2692,7 @@
   },
   {
     "courseId": "CS5791",
-    "title": "사이버보안전공 방법론 특강",
+    "title": "시스템 보안",
     "professor": "윤교수",
     "schedule": "수 11:00-13:00",
     "capacity": 80,
@@ -2705,7 +2705,7 @@
   },
   {
     "courseId": "CS5799",
-    "title": "사이버보안전공 사례연구",
+    "title": "암호학 개론",
     "professor": "조교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -2718,7 +2718,7 @@
   },
   {
     "courseId": "CS5815",
-    "title": "사이버보안전공 스페셜토픽",
+    "title": "네트워크 보안",
     "professor": "조교수",
     "schedule": "목 11:00-13:00",
     "capacity": 80,
@@ -2731,7 +2731,7 @@
   },
   {
     "courseId": "CS5823",
-    "title": "사이버보안전공 테크토크",
+    "title": "보안 감사 실무",
     "professor": "박교수",
     "schedule": "목 13:00-15:00",
     "capacity": 60,
@@ -2744,7 +2744,7 @@
   },
   {
     "courseId": "CS5831",
-    "title": "사이버보안전공 실무클리닉",
+    "title": "클라우드 보안",
     "professor": "윤교수",
     "schedule": "목 09:00-11:00",
     "capacity": 100,
@@ -2757,7 +2757,7 @@
   },
   {
     "courseId": "CS5839",
-    "title": "사이버보안전공 스터디랩",
+    "title": "보안 거버넌스",
     "professor": "조교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -2770,7 +2770,7 @@
   },
   {
     "courseId": "CS5855",
-    "title": "사이버보안전공 실전프로젝트",
+    "title": "악성코드 분석",
     "professor": "조교수",
     "schedule": "화 09:00-11:00",
     "capacity": 100,
@@ -2783,7 +2783,7 @@
   },
   {
     "courseId": "CS5863",
-    "title": "사이버보안전공 산학프로젝트",
+    "title": "네트워크 보안",
     "professor": "조교수",
     "schedule": "화 11:00-13:00",
     "capacity": 80,
@@ -2796,7 +2796,7 @@
   },
   {
     "courseId": "CS5871",
-    "title": "사이버보안전공 혁신워크숍",
+    "title": "디지털 포렌식 개론",
     "professor": "조교수",
     "schedule": "수 13:00-15:00",
     "capacity": 60,
@@ -2809,7 +2809,7 @@
   },
   {
     "courseId": "CS5879",
-    "title": "사이버보안전공 이론과실습",
+    "title": "악성코드 분석",
     "professor": "조교수",
     "schedule": "수 09:00-11:00",
     "capacity": 100,
@@ -2822,7 +2822,7 @@
   },
   {
     "courseId": "CS5895",
-    "title": "사이버보안전공 연구방법",
+    "title": "보안 거버넌스",
     "professor": "이교수",
     "schedule": "금 13:00-15:00",
     "capacity": 60,
