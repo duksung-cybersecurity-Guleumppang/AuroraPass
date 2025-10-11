@@ -50,7 +50,7 @@ export default function SearchFilter({ onSearch }: { onSearch: (params: SearchPa
       category: category || undefined,
       department: department || undefined,
       page: 1,
-      pageSize: 100,
+      pageSize: 50,
       sort: 'recent',
       order: 'desc'
     });
