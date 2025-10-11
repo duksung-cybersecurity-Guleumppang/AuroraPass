@@ -77,7 +77,7 @@ class CourseService:
                     enrolled=db_course["enrolled_count"],
                     theoryHours=db_course.get("theory_hours") or getattr(demo_course, 'theory_hours', None) or 3,
                     practiceHours=db_course.get("practice_hours") or getattr(demo_course, 'practice_hours', None) or 1,
-                    department=db_course.get("department"),
+                    department=db_course.get("department") or getattr(demo_course, 'department', None),
                     year=db_course.get("year"),
                     semester=db_course.get("semester"),
                     level=db_course.get("level"),
