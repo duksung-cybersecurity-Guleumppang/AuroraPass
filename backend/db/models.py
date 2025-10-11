@@ -29,6 +29,13 @@ class Course(Base):
     title = Column(Text, nullable=False)
     capacity = Column(Integer, nullable=False)
     enrolled_count = Column(Integer, nullable=False, default=0)
+    year = Column(Integer, nullable=False, default=2025)
+    semester = Column(Integer, nullable=False, default=1)
+    level = Column(String(20))
+    category = Column(String(30))
+    department = Column(String(100))
+    theory_hours = Column(Integer, nullable=False, default=3)
+    practice_hours = Column(Integer, nullable=False, default=1)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     __table_args__ = (

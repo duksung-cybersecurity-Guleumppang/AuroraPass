@@ -49,6 +49,8 @@ export default function CoursesTable({ courses, cartIdSet, onAddToCart }: Course
             <th className={coursesTableStyles.tableHeader}>신청/정원</th>
             <th className={coursesTableStyles.tableHeader}>담당교수</th>
             <th className={coursesTableStyles.tableHeader}>시간표</th>
+            <th className={coursesTableStyles.tableHeader}>학년도</th>
+            <th className={coursesTableStyles.tableHeader}>학기</th>
           </tr>
         </thead>
         <tbody>
@@ -58,13 +60,13 @@ export default function CoursesTable({ courses, cartIdSet, onAddToCart }: Course
             const inCart = cartIdSet.has(c.courseId);
             // 버튼 비활성화 조건: 이미 장바구니에 있거나 정원이 가득 찬 경우
             const disabled = inCart || c.enrolled >= c.capacity;
-            
+
             return (
               <tr key={c.courseId}>
                 <td>
                   {/* 강의 선택을 위한 체크박스 */}
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={inCart}
                     onChange={() => !disabled && onAddToCart(c.courseId)}
                     disabled={disabled && !inCart}
@@ -80,19 +82,21 @@ export default function CoursesTable({ courses, cartIdSet, onAddToCart }: Course
                     {inCart ? '수강신청' : '수강신청'}
                   </button>
                 </td>
-                {/* 강의 정보 표시 - 상수와 동적 값들 */}
-                <td>{COURSE_DEFAULTS.COURSE_TYPE}</td>
-                <td>{COURSE_DEFAULTS.DEPARTMENT}</td>
+                {/* 강의 정보 표시 - 서버 값 우선, 없으면 기본값 */}
+                <td>{c.category || COURSE_DEFAULTS.COURSE_TYPE}</td>
+                <td>{c.department ?? ''}</td>
                 <td className={styles.courseId}>{c.courseId}</td>
                 <td className={styles.courseTitle}>{c.title}</td>
                 <td>{COURSE_DEFAULTS.CLASS_NUMBER}</td>
-                <td>{COURSE_DEFAULTS.COURSE_LEVEL}</td>
+                <td>{c.level || COURSE_DEFAULTS.COURSE_LEVEL}</td>
                 <td>{COURSE_DEFAULTS.DEFAULT_CREDITS}</td>
-                <td>{COURSE_DEFAULTS.THEORY_HOURS}</td>
-                <td>{COURSE_DEFAULTS.PRACTICE_HOURS}</td>
+                <td>{c.theoryHours ?? COURSE_DEFAULTS.THEORY_HOURS}</td>
+                <td>{c.practiceHours ?? COURSE_DEFAULTS.PRACTICE_HOURS}</td>
                 <td className={styles.courseCapacity}>{c.enrolled}/{c.capacity}</td>
                 <td className={styles.courseProfessor}>{c.professor}</td>
                 <td className={styles.courseSchedule}>{c.schedule}</td>
+                <td>{c.year ?? ''}</td>
+                <td>{c.semester ?? ''}</td>
               </tr>
             );
           })}

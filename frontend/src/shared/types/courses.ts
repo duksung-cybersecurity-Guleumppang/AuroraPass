@@ -22,6 +22,13 @@ export type Course = {
   schedule: string;
   capacity: number;
   enrolled: number;
+  department?: string;
+  year?: number;
+  semester?: number;
+  level?: string;
+  category?: string;
+  theoryHours?: number;
+  practiceHours?: number;
 };
 
 /**

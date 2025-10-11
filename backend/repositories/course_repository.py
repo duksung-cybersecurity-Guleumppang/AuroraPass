@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from uuid import UUID
 from db.models import Course, Cart, CartItem, Enrollment, User
 from db.session import get_db_session
@@ -27,6 +27,75 @@ class CourseRepository:
         """Get course by ID"""
         with get_db_session() as session:
             return session.query(Course).filter(Course.id == course_id).first()
+
+    def get_courses_filtered(
+        self,
+        *,
+        keyword: Optional[str] = None,
+        year: Optional[int] = None,
+        semester: Optional[int] = None,
+        level: Optional[str] = None,
+        category: Optional[str] = None,
+        department: Optional[str] = None,
+        sort: Optional[str] = None,
+        order: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get courses with optional keyword filter and pagination/sorting"""
+        with get_db_session() as session:
+            query = session.query(Course)
+
+            if keyword:
+                # case-insensitive search on title
+                kw = f"%{keyword.lower()}%"
+                query = query.filter(func.lower(Course.title).like(kw))
+
+            if year is not None:
+                query = query.filter(Course.year == year)
+            if semester is not None:
+                query = query.filter(Course.semester == semester)
+            if level:
+                query = query.filter(Course.level == level)
+            if category:
+                query = query.filter(Course.category == category)
+            if department:
+                query = query.filter(Course.department == department)
+
+            # sorting
+            sort_key = (sort or "recent").lower()
+            is_desc = (order or "desc").lower() == "desc"
+
+            if sort_key == "name" or sort_key == "title":
+                query = query.order_by(Course.title.desc() if is_desc else Course.title.asc())
+            elif sort_key == "code" or sort_key == "id":
+                query = query.order_by(Course.id.desc() if is_desc else Course.id.asc())
+            else:  # recent by updated_at
+                query = query.order_by(Course.updated_at.desc() if is_desc else Course.updated_at.asc())
+
+            if offset is not None:
+                query = query.offset(offset)
+            if limit is not None:
+                query = query.limit(limit)
+
+            courses = query.all()
+            return [
+                {
+                    "id": course.id,
+                    "title": course.title,
+                    "capacity": course.capacity,
+                    "enrolled_count": course.enrolled_count,
+                    "theory_hours": getattr(course, 'theory_hours', None),
+                    "practice_hours": getattr(course, 'practice_hours', None),
+                    "year": course.year,
+                    "semester": course.semester,
+                    "level": course.level,
+                    "category": course.category,
+                    "department": course.department,
+                    "updated_at": course.updated_at,
+                }
+                for course in courses
+            ]
     
     def get_user_cart(self, user_id: str) -> List[Dict[str, Any]]:
         """Get user's cart items as course dicts"""
@@ -154,6 +223,17 @@ class CourseRepository:
         
         return results
     
+    def get_departments(self, *, year: Optional[int] = None, semester: Optional[int] = None) -> List[str]:
+        """Get distinct departments from courses, optionally filtered by year/semester"""
+        with get_db_session() as session:
+            query = session.query(Course.department).filter(Course.department.isnot(None))
+            if year is not None:
+                query = query.filter(Course.year == year)
+            if semester is not None:
+                query = query.filter(Course.semester == semester)
+            rows = query.distinct().order_by(Course.department).all()
+            return [r[0] for r in rows if r and r[0]]
+
     def get_user_enrollments(self, user_id: str) -> List[Dict[str, Any]]:
         """Get user's enrolled courses as dicts"""
         # Convert user_id to UUID if it's a string

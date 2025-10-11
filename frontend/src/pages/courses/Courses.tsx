@@ -22,7 +22,7 @@ import CaptchaModal from '../../features/courses/components/CaptchaModal';
 export default function CoursesPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  
+
   // 수강신청 관련 상태와 로직을 커스텀 훅으로 관리
   const {
     courses,
@@ -31,6 +31,7 @@ export default function CoursesPage() {
     cartIdSet,
     loading,
     message,
+    searchCourses,
     captchaModal,
     captchaInput,
     captchaMsg,
@@ -58,7 +59,7 @@ export default function CoursesPage() {
   return (
     <div className={styles.coursesPage}>
       {/* 수강신청 페이지 헤더 */}
-      <CoursesHeader 
+      <CoursesHeader
         cart={cart}
         loading={loading}
         onLogout={handleLogout}
@@ -66,7 +67,7 @@ export default function CoursesPage() {
       />
 
       {/* 메인 콘텐츠 영역 */}
-      <CoursesMainContent 
+      <CoursesMainContent
         courses={courses}
         cart={cart}
         enrolledCourses={enrolledCourses}
@@ -77,6 +78,7 @@ export default function CoursesPage() {
         onRemoveFromCart={removeFromCart}
         onEnroll={enroll}
         onCancelEnrollment={cancelEnrollment}
+        onSearch={searchCourses}
       />
 
       {/* 전역 빠른 클릭 감지기 - 3초 내 5번 클릭 시 캡차 트리거 */}
@@ -90,7 +92,7 @@ export default function CoursesPage() {
       />
 
       {/* 캡차 인증 모달 */}
-      <CaptchaModal 
+      <CaptchaModal
         captchaModal={captchaModal}
         captchaInput={captchaInput}
         captchaMsg={captchaMsg}

@@ -32,6 +32,7 @@ export interface UseCoursesReturn {
 
   // 액션 함수들
   fetchCourses: () => Promise<void>;
+  searchCourses: (params?: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc'; }) => Promise<void>;
   fetchCart: () => Promise<void>;
   addToCart: (courseId: string) => Promise<void>;
   removeFromCart: (courseId: string) => Promise<void>;
@@ -115,6 +116,29 @@ export function useCourses(): UseCoursesReturn {
    */
   const fetchCourses = async () => {
     const res = await fetch('/api/courses');
+    let data: any = [];
+    try { data = await res.json(); } catch { }
+    if (openCaptchaIfNeeded(data)) return;
+    setCourses(Array.isArray(data) ? data : []);
+  };
+
+  /**
+   * 검색 파라미터로 강의 목록을 조회
+   */
+  const searchCourses = async (params?: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc'; }) => {
+    const q = new URLSearchParams();
+    if (params?.keyword) q.set('keyword', params.keyword);
+    if (params?.year !== undefined) q.set('year', String(params.year));
+    if (params?.semester !== undefined) q.set('semester', String(params.semester));
+    if (params?.level) q.set('level', params.level);
+    if (params?.category) q.set('category', params.category);
+    if (params?.department) q.set('department', params.department);
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.pageSize) q.set('pageSize', String(params.pageSize));
+    if (params?.sort) q.set('sort', params.sort);
+    if (params?.order) q.set('order', params.order);
+    const qs = q.toString();
+    const res = await fetch(`/api/courses${qs ? `?${qs}` : ''}`);
     let data: any = [];
     try { data = await res.json(); } catch { }
     if (openCaptchaIfNeeded(data)) return;
@@ -267,6 +291,7 @@ export function useCourses(): UseCoursesReturn {
 
     // 함수들
     fetchCourses,
+    searchCourses,
     fetchCart,
     addToCart,
     removeFromCart,
