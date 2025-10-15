@@ -93,6 +93,8 @@ services:
       - PORT=${BACKEND_PORT:-8000}
       - PYTHONPATH=/app
       - RUN_BOOTSTRAP=${RUN_BOOTSTRAP:-1}
+      - AUTO_LOAD_CURATED=1
+      - CURATED_COURSES_JSON=/app/static/demo/courses_curated.json
       # Top-up 스케줄러 설정
       - TOPUP_ENABLED=${TOPUP_ENABLED:-0}
       - TOPUP_JOIN_TIMEOUT_SEC=${TOPUP_JOIN_TIMEOUT_SEC:-25}
