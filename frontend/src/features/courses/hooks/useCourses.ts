@@ -38,7 +38,7 @@ export interface UseCoursesReturn {
   removeFromCart: (courseId: string) => Promise<void>;
   enroll: () => Promise<void>;
   enrollSingle: (courseId: string) => Promise<void>;
-  cancelEnrollment: (courseId: string) => void;
+  cancelEnrollment: (courseId: string) => Promise<void>;
   submitCaptcha: () => Promise<void>;
   refreshCaptcha: () => Promise<void>;
   setCaptchaInput: (value: string) => void;
@@ -73,16 +73,53 @@ export function useCourses(): UseCoursesReturn {
    * 수강취소를 처리하는 함수
    * @param {string} courseId - 취소할 강의 ID
    */
-  const cancelEnrollment = (courseId: string) => {
-    // 히스토리에서 해당 과목 제거
-    setEnrolledCourses(prev => prev.filter(course => course.courseId !== courseId));
+  const cancelEnrollment = async (courseId: string) => {
+    console.log('[cancelEnrollment] 시작:', courseId);
+    try {
+      const url = `/api/enroll/${courseId}`;
+      console.log('[cancelEnrollment] 요청 URL:', url);
 
-    // 강의 목록에서 enrolled 수를 1 감소 (프론트엔드에서만)
-    setCourses(prev => prev.map(course =>
-      course.courseId === courseId
-        ? { ...course, enrolled: Math.max(0, course.enrolled - 1) }
-        : course
-    ));
+      const res = await fetch(url, { method: 'DELETE' });
+      console.log('[cancelEnrollment] 응답 상태:', res.status);
+
+      let data: any = {};
+      try {
+        data = await res.json();
+        console.log('[cancelEnrollment] 응답 데이터:', data);
+      } catch (e) {
+        console.error('[cancelEnrollment] JSON 파싱 오류:', e);
+      }
+
+      if (openCaptchaIfNeeded(data)) {
+        console.log('[cancelEnrollment] 캡챠 필요');
+        return;
+      }
+
+      if (data?.success) {
+        console.log('[cancelEnrollment] 성공');
+        // 히스토리에서 해당 과목 제거
+        setEnrolledCourses(prev => prev.filter(course => course.courseId !== courseId));
+
+        // 강의 목록에서 enrolled 수를 1 감소
+        setCourses(prev => prev.map(course =>
+          course.courseId === courseId
+            ? { ...course, enrolled: Math.max(0, course.enrolled - 1) }
+            : course
+        ));
+
+        setMessage('수강취소가 완료되었습니다.');
+
+        // 데이터 다시 가져오기
+        await fetchCourses();
+        await fetchMyCourses();
+      } else {
+        console.error('[cancelEnrollment] 실패:', data?.message);
+        setMessage(data?.message || '수강취소에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('[cancelEnrollment] 예외 오류:', error);
+      setMessage('수강취소 중 오류가 발생했습니다.');
+    }
   };
 
   /**

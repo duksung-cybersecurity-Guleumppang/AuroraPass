@@ -168,7 +168,7 @@ class CourseService:
     def my_courses(self, user_id: str) -> List[Course]:
         """Get user's enrolled courses"""
         db_courses = course_repository.get_user_enrollments(user_id)
-        
+
         result = []
         for db_course in db_courses:
             demo_course = self.demo_courses.get(db_course["id"])
@@ -182,8 +182,12 @@ class CourseService:
                     enrolled=db_course["enrolled_count"]
                 )
                 result.append(course_data)
-        
+
         return result
+
+    def cancel_enrollment(self, user_id: str, course_id: str) -> bool:
+        """Cancel user's enrollment for a course"""
+        return course_repository.cancel_enrollment(user_id, course_id)
 
 
     def list_departments(self, *, year: Optional[int] = None, semester: Optional[int] = None) -> List[str]:
