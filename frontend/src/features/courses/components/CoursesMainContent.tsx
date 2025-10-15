@@ -24,6 +24,7 @@ import EnrolledCourses from './EnrolledCourses';
  * @property {(courseId: string) => void} onRemoveFromCart - 장바구니 제거 함수
  * @property {() => void} onEnroll - 수강신청 함수
  * @property {(courseId: string) => void} onCancelEnrollment - 수강취소 함수
+ * @property {(courseId: string) => void} onEnrollSingle - 개별 수강신청 함수
  */
 interface CoursesMainContentProps {
   courses: Course[];
@@ -37,6 +38,7 @@ interface CoursesMainContentProps {
   onEnroll: () => void;
   onCancelEnrollment: (courseId: string) => void;
   onSearch: (params: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc' }) => void;
+  onEnrollSingle: (courseId: string) => void;
 }
 
 /**
@@ -56,6 +58,7 @@ export default function CoursesMainContent({
   onEnroll,
   onCancelEnrollment,
   onSearch,
+  onEnrollSingle,
 }: CoursesMainContentProps) {
   return (
     <div className={styles.coursesContent}>
@@ -84,6 +87,7 @@ export default function CoursesMainContent({
           courses={courses}
           cartIdSet={cartIdSet}
           onAddToCart={onAddToCart}
+          onEnrollSingle={onEnrollSingle}
         />
       </section>
 

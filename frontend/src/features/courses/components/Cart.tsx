@@ -107,9 +107,6 @@ export default function Cart({ cart, loading, message, onEnroll, onRemoveFromCar
         >
           {getButtonText(loading, '수강신청', ENROLLMENT_MESSAGES.LOADING)}
         </button>
-
-        {/* 상태 메시지 표시 (성공/오류 메시지 등) */}
-        {message && <p className={styles.message}>{message}</p>}
       </div>
     </aside>
   );

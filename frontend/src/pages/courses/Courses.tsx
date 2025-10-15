@@ -39,6 +39,7 @@ export default function CoursesPage() {
     addToCart,
     removeFromCart,
     enroll,
+    enrollSingle,
     cancelEnrollment,
     submitCaptcha,
     refreshCaptcha,
@@ -77,6 +78,7 @@ export default function CoursesPage() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onEnroll={enroll}
+        onEnrollSingle={enrollSingle}
         onCancelEnrollment={cancelEnrollment}
         onSearch={searchCourses}
       />

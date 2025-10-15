@@ -36,9 +36,6 @@ export default function CoursesHeader({ cart, loading, onLogout, onEnroll }: Cou
         <h1 className={styles.headerTitle}>수강신청</h1>
       </div>
       <div className={styles.headerActions}>
-        {/* 장바구니 개수 표시 */}
-        <span className={styles.cartCount}>{formatCartCount(cart.length)}</span>
-        
         {/* 로그아웃 버튼 */}
         <button
           onClick={onLogout}
@@ -46,7 +43,6 @@ export default function CoursesHeader({ cart, loading, onLogout, onEnroll }: Cou
         >
           로그아웃
         </button>
-        
       </div>
     </header>
   );
