@@ -134,6 +134,9 @@ services:
       - FRONT_PORT=${FRONT_PORT:-3000}
       - BACKEND_PORT=${BACKEND_PORT:-8000}
       - PORT=${FRONT_PORT:-3000}
+      - CHOKIDAR_USEPOLLING=1
+      - CHOKIDAR_INTERVAL=200
+      - VITE_DEV_FS_POLLING=true
     volumes:
       - ./frontend:/app
       - /app/node_modules

@@ -29,7 +29,9 @@ EXPOSE ${PORT}
 
 # 엔트리포인트 스크립트를 컨테이너 고정 경로에 복사하고 실행 권한 부여
 COPY backend/entrypoint.sh /usr/local/bin/app-entrypoint.sh
-RUN chmod +x /usr/local/bin/app-entrypoint.sh
+
+# [추가] 윈도우 줄바꿈(CRLF) 제거 + 실행권한 부여
+RUN sed -i 's/\r$//' /usr/local/bin/app-entrypoint.sh && chmod +x /usr/local/bin/app-entrypoint.sh
 
 # 애플리케이션을 실행합니다.
 ENTRYPOINT ["/usr/local/bin/app-entrypoint.sh"]
