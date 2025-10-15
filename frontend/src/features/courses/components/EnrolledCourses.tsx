@@ -40,21 +40,21 @@ export default function EnrolledCourses({ enrolledCourses, onCancelEnrollment }:
 
       {/* 수강신청한 과목 테이블 */}
       <div className={styles.coursesTable}>
-        <table className={styles.table}>
+        <table className={`${styles.table} ${enrolledCoursesStyles.enrolledTable}`}>
           {/* 테이블 헤더 */}
           <thead>
             <tr>
-              <th>학년도</th>
-              <th>학기</th>
-              <th>강의명</th>
-              <th>강의코드</th>
-              <th>교수명</th>
-              <th>학점</th>
-              <th>교과목 수준</th>
-              <th>이수구분</th>
-              <th>시간표</th>
-              <th>정원</th>
-              <th>수강취소</th>
+              <th className={enrolledCoursesStyles.colYear}>학년도</th>
+              <th className={enrolledCoursesStyles.colSemester}>학기</th>
+              <th className={enrolledCoursesStyles.colTitle}>강의명</th>
+              <th className={enrolledCoursesStyles.colCode}>강의코드</th>
+              <th className={enrolledCoursesStyles.colProfessor}>교수명</th>
+              <th className={enrolledCoursesStyles.colCredit}>학점</th>
+              <th className={enrolledCoursesStyles.colLevel}>교과목 수준</th>
+              <th className={enrolledCoursesStyles.colCategory}>이수구분</th>
+              <th className={enrolledCoursesStyles.colSchedule}>시간표</th>
+              <th className={enrolledCoursesStyles.colCapacity}>정원</th>
+              <th className={enrolledCoursesStyles.colButton}>수강취소</th>
             </tr>
           </thead>
           <tbody>
@@ -69,17 +69,17 @@ export default function EnrolledCourses({ enrolledCourses, onCancelEnrollment }:
               // 수강신청한 각 과목을 테이블 행으로 렌더링
               enrolledCourses.map((c) => (
                 <tr key={c.courseId}>
-                  <td>{COURSE_DEFAULTS.ACADEMIC_YEAR}</td>
-                  <td>{COURSE_DEFAULTS.SEMESTER}</td>
-                  <td className={styles.courseTitle}>{c.title}</td>
-                  <td className={styles.courseId}>{c.courseId}</td>
-                  <td className={styles.courseProfessor}>{c.professor}</td>
-                  <td>{COURSE_DEFAULTS.DEFAULT_CREDITS}</td>
-                  <td>{COURSE_DEFAULTS.COURSE_LEVEL}</td>
-                  <td>{COURSE_DEFAULTS.COURSE_TYPE}</td>
-                  <td className={styles.courseSchedule}>{c.schedule}</td>
-                  <td className={styles.courseCapacity}>{c.enrolled}/{c.capacity}</td>
-                  <td>
+                  <td className={enrolledCoursesStyles.colYear}>{COURSE_DEFAULTS.ACADEMIC_YEAR}</td>
+                  <td className={enrolledCoursesStyles.colSemester}>{COURSE_DEFAULTS.SEMESTER}</td>
+                  <td className={enrolledCoursesStyles.colTitle} title={c.title}>{c.title}</td>
+                  <td className={enrolledCoursesStyles.colCode}>{c.courseId}</td>
+                  <td className={enrolledCoursesStyles.colProfessor} title={c.professor}>{c.professor}</td>
+                  <td className={enrolledCoursesStyles.colCredit}>{COURSE_DEFAULTS.DEFAULT_CREDITS}</td>
+                  <td className={enrolledCoursesStyles.colLevel}>{COURSE_DEFAULTS.COURSE_LEVEL}</td>
+                  <td className={enrolledCoursesStyles.colCategory}>{COURSE_DEFAULTS.COURSE_TYPE}</td>
+                  <td className={enrolledCoursesStyles.colSchedule} title={c.schedule}>{c.schedule}</td>
+                  <td className={enrolledCoursesStyles.colCapacity}>{c.enrolled}/{c.capacity}</td>
+                  <td className={enrolledCoursesStyles.colButton}>
                     {/* 수강취소 버튼 */}
                     <button
                       onClick={() => onCancelEnrollment(c.courseId)}

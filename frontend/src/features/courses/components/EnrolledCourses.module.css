@@ -2,9 +2,71 @@
  * EnrolledCourses 컴포넌트 전용 스타일
  */
 
+/* 테이블 레이아웃 고정 */
+.enrolledTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
 /* 빈 상태 메시지 스타일 */
 .emptyMessage {
   text-align: center;
   padding: 20px;
   color: #64748b;
+}
+
+/* 컬럼별 너비 조정 */
+.colYear {
+  width: 7%;
+  text-align: center !important;
+}
+
+.colSemester {
+  width: 5%;
+  text-align: center !important;
+}
+
+.colTitle {
+  width: 18%;
+  text-align: left !important;
+}
+
+.colCode {
+  width: 10%;
+  text-align: center !important;
+}
+
+.colProfessor {
+  width: 8%;
+  text-align: center !important;
+}
+
+.colCredit {
+  width: 5%;
+  text-align: center !important;
+}
+
+.colLevel {
+  width: 10%;
+  text-align: center !important;
+}
+
+.colCategory {
+  width: 8%;
+  text-align: center !important;
+}
+
+.colSchedule {
+  width: 12%;
+  text-align: left !important;
+}
+
+.colCapacity {
+  width: 8%;
+  text-align: center !important;
+}
+
+.colButton {
+  width: 9%;
+  text-align: center !important;
 }
