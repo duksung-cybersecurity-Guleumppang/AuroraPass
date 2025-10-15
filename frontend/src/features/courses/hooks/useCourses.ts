@@ -37,6 +37,7 @@ export interface UseCoursesReturn {
   addToCart: (courseId: string) => Promise<void>;
   removeFromCart: (courseId: string) => Promise<void>;
   enroll: () => Promise<void>;
+  enrollSingle: (courseId: string) => Promise<void>;
   cancelEnrollment: (courseId: string) => void;
   submitCaptcha: () => Promise<void>;
   refreshCaptcha: () => Promise<void>;
@@ -200,6 +201,9 @@ export function useCourses(): UseCoursesReturn {
    * 장바구니에 담긴 모든 강의에 대해 신청을 진행합니다.
    */
   const enroll = async () => {
+    // 현재 스크롤 위치 저장
+    const scrollY = window.scrollY;
+
     setLoading(true);
     setMessage('');
     try {
@@ -228,6 +232,70 @@ export function useCourses(): UseCoursesReturn {
       await fetchCourses();
       await fetchCart();
       await fetchMyCourses();
+
+      // 스크롤 위치 복원
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * 개별 강의를 바로 수강신청하는 함수
+   * 장바구니를 거치지 않고 임시로 추가 후 바로 수강신청
+   * @param {string} courseId - 수강신청할 강의 ID
+   */
+  const enrollSingle = async (courseId: string) => {
+    // 현재 스크롤 위치 저장
+    const scrollY = window.scrollY;
+
+    setLoading(true);
+    setMessage('');
+    try {
+      // 1. 임시로 장바구니에 추가 (UI에는 보이지 않음)
+      const addRes = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId })
+      });
+      let addData: any = {};
+      try { addData = await addRes.json(); } catch { }
+      if (openCaptchaIfNeeded(addData)) return;
+
+      // 2. 즉시 수강신청 실행
+      const res = await fetch('/api/enroll', { method: 'POST' });
+      let data: any = null;
+      try { data = await res.json(); } catch { }
+      if (openCaptchaIfNeeded(data)) return;
+
+      const results = data?.results || [];
+      const targetResult = results.find((r: any) => r.courseId === courseId);
+
+      if (targetResult?.success) {
+        // 해당 강의를 enrolledCourses에 추가
+        const enrolledCourse = courses.find(c => c.courseId === courseId);
+        if (enrolledCourse) {
+          setEnrolledCourses(prev => {
+            if (prev.some(c => c.courseId === courseId)) return prev;
+            return [...prev, { ...enrolledCourse, enrolled: (enrolledCourse.enrolled ?? 0) + 1 }];
+          });
+        }
+        setMessage('수강신청이 완료되었습니다.');
+      } else {
+        setMessage(targetResult?.message || '수강신청에 실패했습니다.');
+      }
+
+      // 3. 데이터 갱신 (장바구니도 갱신되어 비워짐)
+      await fetchCourses();
+      await fetchCart();
+      await fetchMyCourses();
+
+      // 스크롤 위치 복원
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
     } finally {
       setLoading(false);
     }
@@ -309,10 +377,10 @@ export function useCourses(): UseCoursesReturn {
     fetchCourses,
     searchCourses,
     fetchCart,
-    fetchMyCourses,
     addToCart,
     removeFromCart,
     enroll,
+    enrollSingle,
     cancelEnrollment,
     submitCaptcha,
     refreshCaptcha,
