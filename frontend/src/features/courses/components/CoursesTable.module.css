@@ -8,6 +8,87 @@
   color: #1e293b;
 }
 
+/* 컬럼별 너비 조정 */
+.colCheckbox {
+  width: 60px;
+  max-width: 60px;
+}
+
+.colButton {
+  width: 90px;
+  max-width: 90px;
+}
+
+.colCategory {
+  width: 70px;
+  max-width: 70px;
+}
+
+.colDepartment {
+  width: 120px;
+  max-width: 120px;
+}
+
+.colCode {
+  width: 100px;
+  max-width: 100px;
+}
+
+.colTitle {
+  width: 180px;
+  max-width: 180px;
+}
+
+.colClass {
+  width: 50px;
+  max-width: 50px;
+}
+
+.colLevel {
+  width: 80px;
+  max-width: 80px;
+}
+
+.colCredit {
+  width: 50px;
+  max-width: 50px;
+}
+
+.colTheory {
+  width: 50px;
+  max-width: 50px;
+}
+
+.colPractice {
+  width: 50px;
+  max-width: 50px;
+}
+
+.colCapacity {
+  width: 80px;
+  max-width: 80px;
+}
+
+.colProfessor {
+  width: 80px;
+  max-width: 80px;
+}
+
+.colSchedule {
+  width: 100px;
+  max-width: 100px;
+}
+
+.colYear {
+  width: 60px;
+  max-width: 60px;
+}
+
+.colSemester {
+  width: 50px;
+  max-width: 50px;
+}
+
 /* 수강신청 버튼 스타일 */
 .enrollButton {
   font-size: 12px;
