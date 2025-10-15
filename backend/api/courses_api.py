@@ -137,3 +137,15 @@ async def list_departments(
 ):
     return course_service.list_departments(year=year, semester=semester)
 
+
+@router.delete("/enroll/{courseId}", summary="수강취소")
+async def cancel_enrollment(courseId: str = Path(..., description="강의 ID")):
+    user_id = "12345678-1234-1234-1234-123456789012"  # demo-user UUID
+    cap = _rate_check_and_captcha(user_id)
+    if cap:
+        return cap
+    success = course_service.cancel_enrollment(user_id, courseId)
+    if not success:
+        raise HTTPException(status_code=404, detail="수강신청 내역을 찾을 수 없습니다.")
+    return {"success": True, "message": "수강취소가 완료되었습니다."}
+

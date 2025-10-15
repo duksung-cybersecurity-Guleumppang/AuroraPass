@@ -239,7 +239,7 @@ class CourseRepository:
         # Convert user_id to UUID if it's a string
         if isinstance(user_id, str):
             user_id = UUID(user_id)
-            
+
         with get_db_session() as session:
             courses = session.query(Course).join(Enrollment).filter(
                 Enrollment.user_id == user_id
@@ -254,6 +254,31 @@ class CourseRepository:
                 }
                 for course in courses
             ]
+
+    def cancel_enrollment(self, user_id: str, course_id: str) -> bool:
+        """Cancel user's enrollment for a course"""
+        # Convert user_id to UUID if it's a string
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+
+        with get_db_session() as session:
+            # Find enrollment
+            enrollment = session.query(Enrollment).filter(
+                and_(Enrollment.user_id == user_id, Enrollment.course_id == course_id)
+            ).first()
+
+            if not enrollment:
+                return False
+
+            # Lock the course row and decrement enrolled_count
+            course = session.query(Course).filter(Course.id == course_id).with_for_update().first()
+            if course and course.enrolled_count > 0:
+                course.enrolled_count -= 1
+
+            # Delete enrollment
+            session.delete(enrollment)
+
+            return True
 
 
 course_repository = CourseRepository()
