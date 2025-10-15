@@ -1,9 +1,8 @@
 FROM oven/bun:1 AS base
 WORKDIR /app
 
-# 의존성 파일만 먼저 복사하여 캐시 활용
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile || bun install
+COPY package.json bun.lock* bun.lockb* ./
+RUN sh -lc 'if [ -f bun.lockb ]; then bun install --frozen-lockfile --no-progress; else bun install --no-progress; fi'
 
 # 소스 복사
 COPY . .

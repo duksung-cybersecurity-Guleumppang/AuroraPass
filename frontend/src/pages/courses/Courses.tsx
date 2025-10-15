@@ -4,7 +4,7 @@
  * 빠른 클릭 감지를 통한 캡차 시스템과 함께 안전한 수강신청 환경을 제공합니다.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCourses } from '../../features/courses/hooks/useCourses';
@@ -21,7 +21,14 @@ import CaptchaModal from '../../features/courses/components/CaptchaModal';
  */
 export default function CoursesPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
+
+  // 로그인 상태가 아니면 강제 리디렉션 (이중 방어: 라우트 가드 + 페이지 내부 검증)
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   // 수강신청 관련 상태와 로직을 커스텀 훅으로 관리
   const {

@@ -152,11 +152,11 @@ export function useCourses(): UseCoursesReturn {
   /**
    * 강의 목록을 서버에서 가져오는 함수
    */
-  const fetchCourses = async () => {
+  const fetchCourses = async (options?: { suppressCaptcha?: boolean }) => {
     const res = await fetch('/api/courses');
     let data: any = [];
     try { data = await res.json(); } catch { }
-    if (openCaptchaIfNeeded(data)) return;
+    if (!options?.suppressCaptcha && openCaptchaIfNeeded(data)) return;
     setCourses(Array.isArray(data) ? data : []);
   };
 
@@ -186,22 +186,22 @@ export function useCourses(): UseCoursesReturn {
   /**
    * 장바구니 목록을 서버에서 가져오는 함수
    */
-  const fetchCart = async () => {
+  const fetchCart = async (options?: { suppressCaptcha?: boolean }) => {
     const res = await fetch('/api/cart');
     let data: any = [];
     try { data = await res.json(); } catch { }
-    if (openCaptchaIfNeeded(data)) return;
+    if (!options?.suppressCaptcha && openCaptchaIfNeeded(data)) return;
     setCart(Array.isArray(data) ? data : []);
   };
 
   /**
    * 서버에서 나의 수강 목록을 가져오는 함수
    */
-  const fetchMyCourses = async () => {
+  const fetchMyCourses = async (options?: { suppressCaptcha?: boolean }) => {
     const res = await fetch('/api/my-courses');
     let data: any = [];
     try { data = await res.json(); } catch { }
-    if (openCaptchaIfNeeded(data)) return;
+    if (!options?.suppressCaptcha && openCaptchaIfNeeded(data)) return;
     setEnrolledCourses(Array.isArray(data) ? data : []);
   };
 
@@ -388,9 +388,11 @@ export function useCourses(): UseCoursesReturn {
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
-    fetchCourses();
-    fetchCart();
-    fetchMyCourses();
+    // 초기 진입 시에는 캡차 모달이 바로 뜨지 않도록 억제
+    const suppress = { suppressCaptcha: true } as const;
+    fetchCourses(suppress);
+    fetchCart(suppress);
+    fetchMyCourses(suppress);
   }, []);
 
   // 장바구니에 담긴 강의 ID들을 Set으로 변환 (성능 최적화)
