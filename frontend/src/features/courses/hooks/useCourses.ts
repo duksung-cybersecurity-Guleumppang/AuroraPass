@@ -1,29 +1,35 @@
 /**
- * 수강신청 관련 상태와 로직을 관리하는 커스텀 훅
- * 강의 목록, 장바구니, 수강신청 등의 비즈니스 로직을 포함합니다.
+ * useCourses 커스텀 훅 (메인 훅)
+ *
+ * 여러 sub-hooks를 조합하여 수강신청 시스템의 모든 기능을 제공합니다.
+ * - useCoursesData: 데이터 조회 및 상태 관리
+ * - useCart: 장바구니 관리
+ * - useEnrollment: 수강신청 관리
+ * - useCaptcha: CAPTCHA 인증
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Course, CaptchaModalState } from '../../../shared/types/courses';
-import { formatEnrollmentResult } from '../../../shared/utils/messages';
-import { CAPTCHA_MESSAGES } from '../../../shared/constants/captcha';
-import { fetchAfterReady } from '../../../shared/utils/healthz';
+import { useMemo, useState } from 'react';
+import { CaptchaModalState } from '../../../shared/types/courses';
+import { useCaptcha } from './useCaptcha';
+import { useCoursesData } from './useCoursesData';
+import { useCart } from './useCart';
+import { useEnrollment } from './useEnrollment';
 
 /**
  * useCourses 훅의 반환 타입
  */
 export interface UseCoursesReturn {
   // 강의 관련 상태
-  courses: Course[];
-  cart: Course[];
-  enrolledCourses: Course[];
+  courses: any[];
+  cart: any[];
+  enrolledCourses: any[];
   cartIdSet: Set<string>;
 
   // UI 상태
   loading: boolean;
   message: string;
 
-  // 캡차 관련 상태
+  // CAPTCHA 관련 상태
   captchaModal: CaptchaModalState;
   captchaInput: string;
   captchaMsg: string;
@@ -31,9 +37,20 @@ export interface UseCoursesReturn {
   clickTimesRef: React.MutableRefObject<number[]>;
 
   // 액션 함수들
-  fetchCourses: () => Promise<void>;
-  searchCourses: (params?: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc'; }) => Promise<void>;
-  fetchCart: () => Promise<void>;
+  fetchCourses: (options?: { suppressCaptcha?: boolean }) => Promise<void>;
+  searchCourses: (params?: {
+    keyword?: string;
+    year?: number;
+    semester?: number;
+    level?: string;
+    category?: string;
+    department?: string;
+    page?: number;
+    pageSize?: number;
+    sort?: 'recent' | 'name' | 'code';
+    order?: 'asc' | 'desc';
+  }) => Promise<void>;
+  fetchCart: (options?: { suppressCaptcha?: boolean }) => Promise<void>;
   addToCart: (courseId: string) => Promise<void>;
   removeFromCart: (courseId: string) => Promise<void>;
   enroll: () => Promise<void>;
@@ -47,321 +64,100 @@ export interface UseCoursesReturn {
 }
 
 /**
- * 수강신청 관련 상태와 로직을 관리하는 커스텀 훅
+ * useCourses 메인 훅
+ *
+ * 여러 sub-hooks를 조합하여 수강신청 시스템의 모든 기능을 제공합니다.
+ *
  * @returns {UseCoursesReturn} 수강신청 관련 상태와 함수들
  */
 export function useCourses(): UseCoursesReturn {
-  // 강의 관련 상태 관리
-  const [courses, setCourses] = useState<Course[]>([]); // 전체 강의 목록
-  const [cart, setCart] = useState<Course[]>([]); // 장바구니에 담긴 강의 목록
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]); // 수강신청 완료된 강의 목록
-
   // UI 상태 관리
-  const [loading, setLoading] = useState(false); // 수강신청 진행 중 여부
-  const [message, setMessage] = useState(''); // 사용자에게 보여줄 상태 메시지
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
-  // 캡차 관련 상태 관리
-  const [captchaModal, setCaptchaModal] = useState<CaptchaModalState>({ open: false }); // 캡차 모달 상태
-  const [captchaInput, setCaptchaInput] = useState(''); // 사용자가 입력한 캡차 답안
-  const [captchaMsg, setCaptchaMsg] = useState(''); // 캡차 검증 결과 메시지
-  const [uiCaptchaRequired, setUiCaptchaRequired] = useState(false); // UI에서 캡차 요구 상태
+  // CAPTCHA 관련 상태 및 함수
+  const {
+    captchaModal,
+    captchaInput,
+    captchaMsg,
+    uiCaptchaRequired,
+    clickTimesRef,
+    setCaptchaInput,
+    setCaptchaModal,
+    setUiCaptchaRequired,
+    openCaptchaIfNeeded,
+    submitCaptcha: submitCaptchaBase,
+    refreshCaptcha
+  } = useCaptcha();
 
-  // 빠른 클릭 감지를 위한 ref
-  const clickTimesRef = useRef<number[]>([]); // 클릭 시간들을 저장하는 배열
+  // 데이터 조회 및 상태 관리
+  const {
+    courses,
+    cart,
+    enrolledCourses,
+    setCourses,
+    setCart,
+    setEnrolledCourses,
+    fetchCourses: fetchCoursesData,
+    searchCourses: searchCoursesData,
+    fetchCart: fetchCartData,
+    fetchMyCourses: fetchMyCoursesData
+  } = useCoursesData();
 
-  /**
-   * 수강취소를 처리하는 함수
-   * @param {string} courseId - 취소할 강의 ID
-   */
-  const cancelEnrollment = async (courseId: string) => {
-    console.log('[cancelEnrollment] 시작:', courseId);
-    try {
-      const url = `/api/enroll/${courseId}`;
-      console.log('[cancelEnrollment] 요청 URL:', url);
-
-      const res = await fetch(url, { method: 'DELETE' });
-      console.log('[cancelEnrollment] 응답 상태:', res.status);
-
-      let data: any = {};
-      try {
-        data = await res.json();
-        console.log('[cancelEnrollment] 응답 데이터:', data);
-      } catch (e) {
-        console.error('[cancelEnrollment] JSON 파싱 오류:', e);
-      }
-
-      if (openCaptchaIfNeeded(data)) {
-        console.log('[cancelEnrollment] 캡챠 필요');
-        return;
-      }
-
-      if (data?.success) {
-        console.log('[cancelEnrollment] 성공');
-        // 히스토리에서 해당 과목 제거
-        setEnrolledCourses(prev => prev.filter(course => course.courseId !== courseId));
-
-        // 강의 목록에서 enrolled 수를 1 감소
-        setCourses(prev => prev.map(course =>
-          course.courseId === courseId
-            ? { ...course, enrolled: Math.max(0, course.enrolled - 1) }
-            : course
-        ));
-
-        setMessage('수강취소가 완료되었습니다.');
-
-        // 데이터 다시 가져오기
-        await fetchCourses();
-        await fetchMyCourses();
-      } else {
-        console.error('[cancelEnrollment] 실패:', data?.message);
-        setMessage(data?.message || '수강취소에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('[cancelEnrollment] 예외 오류:', error);
-      setMessage('수강취소 중 오류가 발생했습니다.');
-    }
-  };
-
-  /**
-   * 서버 응답에 따라 캡차 모달을 열어야 하는지 확인하는 함수
-   * @param {any} data - 서버 응답 데이터
-   * @returns {boolean} 캡차 모달이 열렸는지 여부
-   */
-  const openCaptchaIfNeeded = (data: any): boolean => {
-    if (uiCaptchaRequired) {
-      if (!captchaModal.open) {
-        // already required on UI, ensure modal is open
-        refreshCaptcha();
-      }
-      return true;
-    }
-    const requireCaptcha = data?.requireCaptcha ?? data?.require_captcha;
-    if (requireCaptcha) {
-      const cap = data?.captcha || {};
-      setCaptchaModal({
-        open: true,
-        captchaId: cap.captchaId || cap.captcha_id,
-        audioPath: cap.audioPath || cap.audio_path
-      });
-      setUiCaptchaRequired(true);
-      return true;
-    }
-    return false;
-  };
-
-  /**
-   * 강의 목록을 서버에서 가져오는 함수
-   */
+  // CAPTCHA 체크를 포함한 래퍼 함수들
   const fetchCourses = async (options?: { suppressCaptcha?: boolean }) => {
-    const res = await fetch('/api/courses');
-    let data: any = [];
-    try { data = await res.json(); } catch { }
-    if (!options?.suppressCaptcha && openCaptchaIfNeeded(data)) return;
-    setCourses(Array.isArray(data) ? data : []);
+    const data = await fetchCoursesData(options);
+    if (!options?.suppressCaptcha) {
+      openCaptchaIfNeeded(data);
+    }
   };
 
-  /**
-   * 검색 파라미터로 강의 목록을 조회
-   */
-  const searchCourses = async (params?: { keyword?: string; year?: number; semester?: number; level?: string; category?: string; department?: string; page?: number; pageSize?: number; sort?: 'recent' | 'name' | 'code'; order?: 'asc' | 'desc'; }) => {
-    const q = new URLSearchParams();
-    if (params?.keyword) q.set('keyword', params.keyword);
-    if (params?.year !== undefined) q.set('year', String(params.year));
-    if (params?.semester !== undefined) q.set('semester', String(params.semester));
-    if (params?.level) q.set('level', params.level);
-    if (params?.category) q.set('category', params.category);
-    if (params?.department) q.set('department', params.department);
-    if (params?.page) q.set('page', String(params.page));
-    if (params?.pageSize) q.set('pageSize', String(params.pageSize));
-    if (params?.sort) q.set('sort', params.sort);
-    if (params?.order) q.set('order', params.order);
-    const qs = q.toString();
-    const res = await fetch(`/api/courses${qs ? `?${qs}` : ''}`);
-    let data: any = [];
-    try { data = await res.json(); } catch { }
-    if (openCaptchaIfNeeded(data)) return;
-    setCourses(Array.isArray(data) ? data : []);
+  const searchCourses = async (params?: any) => {
+    const data = await searchCoursesData(params);
+    openCaptchaIfNeeded(data);
   };
 
-  /**
-   * 장바구니 목록을 서버에서 가져오는 함수
-   */
   const fetchCart = async (options?: { suppressCaptcha?: boolean }) => {
-    const res = await fetch('/api/cart');
-    let data: any = [];
-    try { data = await res.json(); } catch { }
-    if (!options?.suppressCaptcha && openCaptchaIfNeeded(data)) return;
-    setCart(Array.isArray(data) ? data : []);
+    const data = await fetchCartData(options);
+    if (!options?.suppressCaptcha) {
+      openCaptchaIfNeeded(data);
+    }
   };
 
-  /**
-   * 서버에서 나의 수강 목록을 가져오는 함수
-   */
   const fetchMyCourses = async (options?: { suppressCaptcha?: boolean }) => {
-    const res = await fetch('/api/my-courses');
-    let data: any = [];
-    try { data = await res.json(); } catch { }
-    if (!options?.suppressCaptcha && openCaptchaIfNeeded(data)) return;
-    setEnrolledCourses(Array.isArray(data) ? data : []);
-  };
-
-  /**
-   * 강의를 장바구니에 추가하는 함수
-   * @param {string} courseId - 추가할 강의 ID
-   */
-  const addToCart = async (courseId: string) => {
-    const res = await fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId })
-    });
-    let data: any = {};
-    try { data = await res.json(); } catch { }
-    if (openCaptchaIfNeeded(data)) return;
-    fetchCart();
-  };
-
-  /**
-   * 장바구니에서 강의를 제거하는 함수
-   * @param {string} courseId - 제거할 강의 ID
-   */
-  const removeFromCart = async (courseId: string) => {
-    const res = await fetch(`/api/cart/${courseId}`, { method: 'DELETE' });
-    let data: any = {};
-    try { data = await res.json(); } catch { }
-    if (openCaptchaIfNeeded(data)) return;
-    fetchCart();
-  };
-
-  /**
-   * 수강신청을 실행하는 함수
-   * 장바구니에 담긴 모든 강의에 대해 신청을 진행합니다.
-   */
-  const enroll = async () => {
-    // 현재 스크롤 위치 저장
-    const scrollY = window.scrollY;
-
-    setLoading(true);
-    setMessage('');
-    try {
-      const res = await fetch('/api/enroll', { method: 'POST' });
-      let data: any = null;
-      try { data = await res.json(); } catch { }
-      if (openCaptchaIfNeeded(data)) return;
-      const results = data?.results || [];
-      const successfulResults = results.filter((r: any) => r.success);
-      const okCount = successfulResults.length;
-      const failCount = results.length - okCount;
-
-      // 신청한 모든 과목들을 enrolledCourses에 저장 (성공/실패 무관, 중복 제거)
-      const enrolledCourses = cart
-        .filter(course => results.some((r: any) => r.courseId === course.courseId))
-        // UI 표시용: 본인 신청 반영해 신청 인원 +1로 표시
-        .map(course => ({ ...course, enrolled: (course.enrolled ?? 0) + 1 }));
-      setEnrolledCourses(prev => {
-        const newCourses = enrolledCourses.filter(
-          course => !prev.some(enrolled => enrolled.courseId === course.courseId)
-        );
-        return [...prev, ...newCourses];
-      });
-
-      setMessage(formatEnrollmentResult(okCount, failCount));
-      await fetchCourses();
-      await fetchCart();
-      await fetchMyCourses();
-
-      // 스크롤 위치 복원
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
-    } finally {
-      setLoading(false);
+    const data = await fetchMyCoursesData(options);
+    if (!options?.suppressCaptcha) {
+      openCaptchaIfNeeded(data);
     }
   };
 
-  /**
-   * 개별 강의를 바로 수강신청하는 함수
-   * 장바구니를 거치지 않고 임시로 추가 후 바로 수강신청
-   * @param {string} courseId - 수강신청할 강의 ID
-   */
-  const enrollSingle = async (courseId: string) => {
-    // 현재 스크롤 위치 저장
-    const scrollY = window.scrollY;
+  // 장바구니 관리
+  const { addToCart, removeFromCart } = useCart({
+    openCaptchaIfNeeded,
+    fetchCart
+  });
 
-    setLoading(true);
-    setMessage('');
-    try {
-      // 1. 임시로 장바구니에 추가 (UI에는 보이지 않음)
-      const addRes = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId })
-      });
-      let addData: any = {};
-      try { addData = await addRes.json(); } catch { }
-      if (openCaptchaIfNeeded(addData)) return;
+  // 수강신청 관리
+  const { enroll, enrollSingle, cancelEnrollment } = useEnrollment({
+    courses,
+    cart,
+    setCourses,
+    setEnrolledCourses,
+    setLoading,
+    setMessage,
+    openCaptchaIfNeeded,
+    fetchCourses,
+    fetchCart,
+    fetchMyCourses
+  });
 
-      // 2. 즉시 수강신청 실행
-      const res = await fetch('/api/enroll', { method: 'POST' });
-      let data: any = null;
-      try { data = await res.json(); } catch { }
-      if (openCaptchaIfNeeded(data)) return;
-
-      const results = data?.results || [];
-      const targetResult = results.find((r: any) => r.courseId === courseId);
-
-      if (targetResult?.success) {
-        // 해당 강의를 enrolledCourses에 추가
-        const enrolledCourse = courses.find(c => c.courseId === courseId);
-        if (enrolledCourse) {
-          setEnrolledCourses(prev => {
-            if (prev.some(c => c.courseId === courseId)) return prev;
-            return [...prev, { ...enrolledCourse, enrolled: (enrolledCourse.enrolled ?? 0) + 1 }];
-          });
-        }
-        setMessage('수강신청이 완료되었습니다.');
-      } else {
-        setMessage(targetResult?.message || '수강신청에 실패했습니다.');
-      }
-
-      // 3. 데이터 갱신 (장바구니도 갱신되어 비워짐)
-      await fetchCourses();
-      await fetchCart();
-      await fetchMyCourses();
-
-      // 스크롤 위치 복원
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * 캡차 인증을 제출하는 함수
-   * 캡차 인증 성공 시 수강신청 완료 처리를 합니다.
-   */
+  // CAPTCHA 인증 제출
   const submitCaptcha = async () => {
-    if (!captchaModal.captchaId) return;
-    setCaptchaMsg('');
-    const res = await fetch('/api/enroll/unlock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ captchaId: captchaModal.captchaId, userInput: captchaInput })
-    });
-    const data = await res.json();
-    if (data?.success) {
-      setCaptchaModal({ open: false });
-      setCaptchaInput('');
-      setUiCaptchaRequired(false);
-      clickTimesRef.current = [];
-
-      // 현재 cart에 있는 강의들을 enrolledCourses에 추가
+    await submitCaptchaBase(async () => {
+      // CAPTCHA 인증 성공 시 실행할 로직
       setEnrolledCourses(prev => {
         const newCourses = cart
           .filter(course => !prev.some(enrolled => enrolled.courseId === course.courseId))
-          // UI 표시용: 본인 신청 반영해 신청 인원 +1로 표시
           .map(course => ({ ...course, enrolled: (course.enrolled ?? 0) + 1 }));
         return [...prev, ...newCourses];
       });
@@ -370,32 +166,10 @@ export function useCourses(): UseCoursesReturn {
       await fetchCourses();
       await fetchCart();
       await fetchMyCourses();
-    } else {
-      setCaptchaMsg(data?.message || CAPTCHA_MESSAGES.VERIFICATION_FAILED);
-    }
+    });
   };
 
-  /**
-   * 새로운 캡차를 생성하고 모달을 여는 함수
-   */
-  const refreshCaptcha = async () => {
-    setCaptchaMsg('');
-    setCaptchaInput('');
-    const res = await fetchAfterReady('/api/captcha/generate');
-    const data = await res.json();
-    setCaptchaModal({ open: true, captchaId: data?.captchaId, audioPath: data?.audioPath });
-  };
-
-  // 컴포넌트 마운트 시 데이터 로드
-  useEffect(() => {
-    // 초기 진입 시에는 캡차 모달이 바로 뜨지 않도록 억제
-    const suppress = { suppressCaptcha: true } as const;
-    fetchCourses(suppress);
-    fetchCart(suppress);
-    fetchMyCourses(suppress);
-  }, []);
-
-  // 장바구니에 담긴 강의 ID들을 Set으로 변환 (성능 최적화)
+  // 장바구니 ID Set (성능 최적화)
   const cartIdSet = useMemo(() => new Set(cart.map((c) => c.courseId)), [cart]);
 
   return {
@@ -425,6 +199,6 @@ export function useCourses(): UseCoursesReturn {
     refreshCaptcha,
     setCaptchaInput,
     setCaptchaModal,
-    setUiCaptchaRequired,
+    setUiCaptchaRequired
   };
 }
