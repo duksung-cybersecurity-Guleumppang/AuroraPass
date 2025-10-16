@@ -301,22 +301,6 @@
     color: #64748b;
 }
 
-.addToCartButton {
-    background: #10b981;
-    color: #fff;
-}
-
-.addToCartButton:hover {
-    background: #059669;
-}
-
-.addToCartButton:disabled,
-.addToCartButtonDisabled {
-    background: #cbd5e1;
-    cursor: not-allowed;
-    color: #94a3b8;
-}
-
 /* 장바구니 사이드바 */
 .cartSidebar {
     width: 100%;

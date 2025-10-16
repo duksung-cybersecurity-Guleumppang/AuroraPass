@@ -1,21 +1,20 @@
 /**
  * 로그인 페이지 컴포넌트
- * 사용자 인증과 캡차 검증 기능을 제공합니다.
- * ID/PASSWORD 입력과 오디오 기반 캡차 인증을 통해 안전한 로그인을 보장합니다.
+ * 사용자 인증과 CAPTCHA 검증 기능을 제공합니다.
+ * ID/PASSWORD 입력과 오디오 기반 CAPTCHA 인증을 통해 안전한 로그인을 보장합니다.
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Captcha } from '../../shared/types/login';
+import { useLoginCaptcha } from './hooks/useLoginCaptcha';
 import bgImage from '../../../images/Home_screen_background2.jpg';
 import logoImage from '../../../images/logo.jpg';
 import styles from './Login.module.css';
-import { fetchAfterReady } from '../../shared/utils/healthz';
 
 /**
  * LoginPage 컴포넌트 - 사용자 인증을 위한 로그인 페이지
- * 캡차 검증과 함께 안전한 로그인 기능을 제공합니다.
+ * CAPTCHA 검증과 함께 안전한 로그인 기능을 제공합니다.
  * @returns {JSX.Element} 로그인 페이지 JSX 요소
  */
 export default function LoginPage() {
@@ -30,56 +29,32 @@ export default function LoginPage() {
   }, [isAuthenticated, navigate]);
 
   // 로그인 폼 상태 관리
-  const [username, setUsername] = useState(''); // 사용자가 입력한 아이디
-  const [password, setPassword] = useState(''); // 사용자가 입력한 비밀번호
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginMsg, setLoginMsg] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
 
-  // 캡차 관련 상태 관리
-  const [captcha, setCaptcha] = useState<Captcha | null>(null); // 서버에서 받은 캡차 정보
-  const [captchaInput, setCaptchaInput] = useState(''); // 사용자가 입력한 캡차 답안
-  const [captchaMsg, setCaptchaMsg] = useState(''); // 캡차 검증 결과 메시지
-  const [captchaVerified, setCaptchaVerified] = useState(false); // 캡차 검증 완료 여부
-
-  // 로그인 프로세스 상태 관리
-  const [loginMsg, setLoginMsg] = useState(''); // 로그인 결과 메시지
-  const [loggingIn, setLoggingIn] = useState(false); // 로그인 진행 중 여부
-
-  /**
-   * 새로운 캡차를 서버에서 가져오는 함수
-   * 캡차 상태를 초기화하고 새로운 캡차 데이터를 받아옵니다.
-   */
-  const fetchCaptcha = async () => {
-    setCaptchaMsg('');
-    setCaptchaVerified(false);
-    setCaptchaInput('');
-    const res = await fetchAfterReady('/api/captcha/generate');
-    const data = await res.json();
-    setCaptcha(data);
-  };
-
-  /**
-   * 캡차 인증을 확인하는 함수
-   * 사용자가 입력한 캡차 답안을 서버에서 검증합니다.
-   */
-  const verifyCaptcha = async () => {
-    if (!captcha) return;
-    const res = await fetch('/api/captcha/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ captchaId: captcha.captchaId, userInput: captchaInput })
-    });
-    const data = await res.json();
-    setCaptchaMsg(data.message || (data.success ? '성공' : '실패'));
-    setCaptchaVerified(!!data.success);
-  };
+  // CAPTCHA 상태 및 함수 (useLoginCaptcha 훅 사용)
+  const {
+    captcha,
+    captchaInput,
+    captchaMsg,
+    captchaVerified,
+    setCaptchaInput,
+    fetchCaptcha,
+    verifyCaptcha
+  } = useLoginCaptcha();
 
   /**
    * 로그인을 처리하는 함수
-   * 캡차 검증이 완료된 경우에만 로그인을 시도합니다.
+   * CAPTCHA 검증이 완료된 경우에만 로그인을 시도합니다.
    */
   const onLogin = async () => {
     if (!captchaVerified) return;
+
     setLoggingIn(true);
     setLoginMsg('');
+
     try {
       const success = await login(username, password);
       if (success) {
@@ -93,9 +68,6 @@ export default function LoginPage() {
       setLoggingIn(false);
     }
   };
-
-  // 컴포넌트 마운트 시 캡차 생성
-  useEffect(() => { fetchCaptcha(); }, []);
 
   return (
     <div
